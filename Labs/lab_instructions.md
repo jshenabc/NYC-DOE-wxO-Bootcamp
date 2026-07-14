@@ -55,15 +55,25 @@ You will set up the connection and import all required tools yourself through th
 
 The Operations and Emergency Response flows call the **real NYC Department of Education Location API** to look up schools (`schoolDBN`) and offices (`locationCode`) in a district. This API requires an OAuth2 connection configured with shared credentials.
 
-1. In Watson Orchestrate, click **Connections** in the left navigation panel.
+1. In Watson Orchestrate, click on the hamburger menu to open up the left navigation panel. Next, under **Manage**, click **Security**.
 
-2. Click **New connection**.
+![alt text](../Screenshots/clickhamburger.png)
+![alt text](../Screenshots/managesecurity.png)
 
-3. In the search box type `location_api` — if it already exists click on it. If not, click **Create connection** and enter `location_api` as the connection name.
+2. Click on the **Connections** tab, then click on the **Add connection +** box.
 
-4. Under **Authentication type**, select **OAuth 2.0 — Client Credentials**.
+![alt text](../Screenshots/connectionstab.png)
 
-5. Fill in the following fields:
+3. In the **Connection ID** field, enter `location_api` as the connection name. Enter `NYS DOE Location API` as the **Display Name**. You may also optionally add a description field. Click **Save and continue** at the bottom right. A confirmation message will pop up and ask you if you want to continue, you can go ahead and click **Continue**.
+
+![alt text](../Screenshots/setupconnection.png)
+
+4. In the **Configure draft connection page**, leave **Signle sign-on(SSO)** off. Under **Authentication type**, select **OAuth 2.0 — Client Credentials**. 
+
+![alt text](../Screenshots/configureconnection.png)
+
+
+5. Fill in the following fields, you can leave the other fields as is. Then, click **Next**:
 
    | Field | Value |
    |---|---|
@@ -72,12 +82,19 @@ The Operations and Emergency Response flows call the **real NYC Department of Ed
    | **Client Secret** | `7b5552e42e5adf2ca9e7405bb0e706bb` |
    | **Scope** | `location` |
 
-6. Under **Connection type**, select **Shared (Team)**.
+![alt text](../Screenshots/fillincreds.png)
 
-7. Click **Save** (or **Update** if the connection already existed).
+6. In the **Configure live connection** page, you can click **Paste draft configuration**. It will automatically populate the values you filled in for the draft configuration.
+
+![alt text](../Screenshots/pastedraft.png)
+
+7. Click **Finish**
+
+![alt text](../Screenshots/finishconnect.png)
 
 > ✅ You should see the connection status change to **Connected**. If it shows an error, double-check the Client ID and Secret — make sure there are no extra spaces.
 
+THIS IS WHERE I LEFT OFF 7/14 4:30 PM
 ---
 
 ### Step B: Import the NYC Location API tool
