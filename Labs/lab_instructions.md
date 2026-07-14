@@ -1,20 +1,22 @@
-
 # 🏫 NYSDOE: Agentic AI for School District Automation
 
 ## Table of Contents
 
 - [Use Case Description](#use-case-description)
 - [Pre-requisites](#pre-requisites)
+  - [Step A: Set up the NYC Location API connection](#step-a-set-up-the-nyc-location-api-connection)
+  - [Step B: Import the NYC Location API tool](#step-b-import-the-nyc-location-api-tool)
+  - [Step C: Import the mock Security and Facilities API tools](#step-c-import-the-mock-security-and-facilities-api-tools)
 - [Part 1 — Building the Operations Workflow (Use Case 1)](#part-1--building-the-operations-workflow-use-case-1)
   - [Step 1: Create the relocation_flow and configure inputs and outputs](#step-1-create-the-relocation_flow-and-configure-inputs-and-outputs)
-  - [Step 2: Add the find_buildings tool node](#step-2-add-the-find_buildings-tool-node)
+  - [Step 2: Add the get_district_info tool node](#step-2-add-the-get_district_info-tool-node)
   - [Step 3: Add the book_rooms tool node](#step-3-add-the-book_rooms-tool-node)
   - [Step 4: Add the draft_output prompt node](#step-4-add-the-draft_output-prompt-node)
   - [Step 5: Map the prompt inputs](#step-5-map-the-prompt-inputs)
   - [Step 6: Connect the output and save](#step-6-connect-the-output-and-save)
 - [Part 1B — Building the Emergency Response Workflow (Use Case 2)](#part-1b--building-the-emergency-response-workflow-use-case-2)
   - [Step 1: Create the threat_response_flow and configure inputs and outputs](#step-1-create-the-threat_response_flow-and-configure-inputs-and-outputs)
-  - [Step 2: Add the find_buildings tool node](#step-2-add-the-find_buildings-tool-node-1)
+  - [Step 2: Add the get_district_info tool node](#step-2-add-the-get_district_info-tool-node-1)
   - [Step 3: Add the alert_principals tool node](#step-3-add-the-alert_principals-tool-node)
   - [Step 4: Add the set_office_hvac tool node](#step-4-add-the-set_office_hvac-tool-node)
   - [Step 5: Add the lock_office_doors tool node](#step-5-add-the-lock_office_doors-tool-node)
@@ -45,20 +47,88 @@ You will then build specialist agents backed by those flows, connect an external
 
 ## Pre-requisites
 
-Before starting, make sure the following API specs have been imported into your Watson Orchestrate environment by your lab instructor. You should be able to see the following skills in **Skills & Connections**:
+You will set up the connection and import all required tools yourself through the Watson Orchestrate UI. Follow Steps A, B, and C below before starting Part 1.
 
-**From the NYSDOE Location API:**
-- `getBuildingsByDistrict`
-- `bookBuilding`
+---
 
-**From the NYSDOE Facilities API:**
-- `setHVACMode`
+### Step A: Set up the NYC Location API connection
 
-**From the NYSDOE Security API:**
-- `setDoorState`
-- `bulkAlertPrincipals`
+The Operations and Emergency Response flows call the **real NYC Department of Education Location API** to look up schools (`schoolDBN`) and offices (`locationCode`) in a district. This API requires an OAuth2 connection configured with shared credentials.
 
-If any of these are missing, ask your instructor before proceeding.
+1. In Watson Orchestrate, click **Connections** in the left navigation panel.
+
+2. Click **New connection**.
+
+3. In the search box type `location_api` — if it already exists click on it. If not, click **Create connection** and enter `location_api` as the connection name.
+
+4. Under **Authentication type**, select **OAuth 2.0 — Client Credentials**.
+
+5. Fill in the following fields:
+
+   | Field | Value |
+   |---|---|
+   | **Token URL** | `https://apistg.schools.nyc/doe/stg/v1/oauth/oauth2/token` |
+   | **Client ID** | `c14a0da2b3111279c05e959c43dfbaef` |
+   | **Client Secret** | `7b5552e42e5adf2ca9e7405bb0e706bb` |
+   | **Scope** | `location` |
+
+6. Under **Connection type**, select **Shared (Team)**.
+
+7. Click **Save** (or **Update** if the connection already existed).
+
+> ✅ You should see the connection status change to **Connected**. If it shows an error, double-check the Client ID and Secret — make sure there are no extra spaces.
+
+---
+
+### Step B: Import the NYC Location API tool
+
+This tool calls the real NYSDOE Location API and returns the list of schools (`schoolDBN`) and offices (`locationCode`) for a district.
+
+1. In Watson Orchestrate, click **Tools** in the left navigation panel.
+
+2. Click **Import tool**.
+
+3. Click **Upload file** and select:
+   ```
+   tools/nyc_location_api.yaml
+   ```
+
+4. When prompted to select a connection, choose **location_api**.
+
+5. Click **Import**.
+
+6. Confirm the tool `getDistrictAdminDetails` appears in your tool list.
+
+> 💡 **What this tool returns:**
+> - `schools[].schoolDBN` — the building code for each school building in the district
+> - `offices[].locationCode` — the building code for each office building in the district
+>
+> These are the real NYCDOE codes used by the Security and Facilities APIs to lock doors, control HVAC, and send principal alerts.
+
+---
+
+### Step C: Import the mock Security and Facilities API tools
+
+The Security and Facilities APIs are mock services that simulate door locking, HVAC control, room booking, and principal alerts. They accept the same `schoolDBN` and `locationCode` values returned by the real Location API.
+
+1. In Watson Orchestrate, click **Tools** → **Import tool**.
+
+2. Upload the following files one at a time (no connection required for any of them):
+
+   | File | Tools it provides |
+   |---|---|
+   | `tools/nysdoe_facilities_api.yaml` | `bookBuilding`, `bulkSetHVAC` |
+   | `tools/nysdoe_security_api.yaml` | `setDoorState`, `bulkAlertPrincipals` |
+
+3. After importing both files confirm the following tools appear in your tool list:
+
+   - `getDistrictAdminDetails` *(Location API — real)*
+   - `bookBuilding` *(Facilities API — mock)*
+   - `bulkSetHVAC` *(Facilities API — mock)*
+   - `setDoorState` *(Security API — mock)*
+   - `bulkAlertPrincipals` *(Security API — mock)*
+
+If any are missing, ask your instructor before proceeding.
 
 ---
 
@@ -124,34 +194,34 @@ You can verify the output was added by clicking on the **End** node:
 
 ---
 
-### Step 2: Add the find_buildings tool node
+### Step 2: Add the get_district_info tool node
 
 Hover over the arrow connecting the Start node to the End node and click on the **+** sign:
 
 ![alt text](./lab-assets/part1/add_step.png)
 
-Select **Tool**. Search for `getBuildingsByDistrict` and select it:
+Select **Tool**. Search for `getDistrictAdminDetails` and select it:
 
 ![alt text](./lab-assets/part1/select_tool.png)
 
 Click on the new node, then click the **pencil icon** to rename it to:
 ```
-find_buildings
+get_district_info
 ```
 
 Click on **Edit data mapping** to configure the inputs for this tool:
 
 ![alt text](./lab-assets/part1/edit_data_mapping.png)
 
-We need to map three inputs. For each input, click the **expression icon** (the `fx` symbol) in the corresponding row and enter the expression:
+Map the following inputs. For each, click the **expression icon** (`fx`) in the corresponding row and enter the expression:
 
 | Input field | Expression |
 |---|---|
-| `district_id` | `int(flow.input.district_id)` |
-| `building_type` | `"school"` |
-| `available_capacity` | `True` |
+| `districtCode` | `str(flow.input.district_id).zfill(2)` |
+| `serviceAccountID` | `"api.ibmtest"` |
+| `Components` | `"schools,offices"` |
 
-> 💡 **Note:** `flow.input.district_id` refers to a flow-level input variable we haven't defined yet — we will define flow inputs in the next step. For now, enter the expressions as shown.
+> 💡 `zfill(2)` zero-pads the district ID so `"4"` becomes `"04"` and `"7"` becomes `"07"` — the format the API expects.
 
 After setting the mappings, click on the **Start** node and select **Edit flow inputs**:
 
@@ -173,7 +243,7 @@ Add the following input variables. For each, click **Add variable**, select the 
 
 ### Step 3: Add the book_rooms tool node
 
-Hover over the arrow connecting `find_buildings` to the End node and click **+**. Select **Tool** and search for `bookBuilding`. Select it and rename the node to:
+Hover over the arrow connecting `get_district_info` to the End node and click **+**. Select **Tool** and search for `bookBuilding`. Select it and rename the node to:
 ```
 book_rooms
 ```
@@ -182,13 +252,13 @@ Click **Edit data mapping** and set the following input mappings:
 
 | Input field | Expression |
 |---|---|
-| `building_id` | `flow['find_buildings'].output[0].building_id` |
+| `buildingCode` | `flow['get_district_info'].output['schools'][0]['schoolDBN']` |
 | `requester` | `"Operations Agent"` |
 | `reason` | `flow.input.disruption_type + " at " + flow.input.affected_building_name` |
 | `rooms_needed` | `flow.input.rooms_needed` |
 | `start_date` | `flow.input.start_date` |
 
-> 💡 `flow['find_buildings'].output[0].building_id` picks the first building returned by the Location API — it is sorted by highest available capacity, so this selects the best-fit option.
+> 💡 `flow['get_district_info'].output['schools'][0]['schoolDBN']` picks the first school's building code (`schoolDBN`) returned by the real Location API. The agent will use this to book rooms in that school building.
 
 ![alt text](./lab-assets/part1/book_rooms_mapping.png)
 
@@ -350,7 +420,7 @@ and click **Add**. Click **Save**.
 
 ---
 
-### Step 2: Add the find_buildings tool node
+### Step 2: Add the get_district_info tool node
 
 Click on the **Start** node and select **Edit flow inputs**. Add the following input variables:
 
@@ -361,17 +431,20 @@ Click on the **Start** node and select **Edit flow inputs**. Add the following i
 | `severity` | String | No | Default: `"high"` |
 | `alert_message` | String | No | Optional custom SMS override text |
 
-Hover over the arrow from Start to End and click **+**. Select **Tool**, search for `getBuildingsByDistrict`, select it, and rename the node to:
+Hover over the arrow from Start to End and click **+**. Select **Tool**, search for `getDistrictAdminDetails`, select it, and rename the node to:
 ```
-find_buildings
+get_district_info
 ```
 
 Click **Edit data mapping** and set:
 
 | Input field | Expression |
 |---|---|
-| `district_id` | `int(flow.input.district_id)` |
-| `building_type` | `"all"` |
+| `districtCode` | `str(flow.input.district_id).zfill(2)` |
+| `serviceAccountID` | `"api.ibmtest"` |
+| `Components` | `"schools,offices"` |
+
+> 💡 This calls the real NYC Location API. The response gives you `schools[].schoolDBN` (school building codes) and `offices[].locationCode` (office building codes). The next nodes use these to alert principals and secure the superintendent office.
 
 ![alt text](./lab-assets/part1b/find_buildings_mapping.png)
 
@@ -399,21 +472,21 @@ Click **Edit data mapping** and set:
 
 ### Step 4: Add the set_office_hvac tool node
 
-Hover over the arrow after `alert_principals` and click **+**. Select **Tool**, search for `setHVACMode`, select it, and rename the node to:
+Hover over the arrow after `alert_principals` and click **+**. Select **Tool**, search for `bulkSetHVAC`, select it, and rename the node to:
 ```
 set_office_hvac
 ```
 
 Click **Edit data mapping** and set:
 
+> 💡 `bulkSetHVAC` targets **all buildings in the district** by `districtCode` in a single API call — no need to look up individual office building codes. The response includes `buildings_count` so the prompt can report exactly how many offices were secured.
+
 | Input field | Expression |
 |---|---|
-| `building_id` | `next((b.building_id for b in flow['find_buildings'].output if b.building_type == 'office'), '')` |
+| `districtCode` | `str(flow.input.district_id).zfill(2)` |
 | `mode` | `"low_power"` |
 | `triggered_by` | `"Emergency Response Agent"` |
 | `reason` | `flow.input.threat_type.title() + " — District " + flow.input.district_id + " (" + flow.input.severity + " severity)"` |
-
-> 💡 The `next(...)` expression finds the first office building from the list returned by `find_buildings`. If no office is found, it returns an empty string.
 
 ![alt text](./lab-assets/part1b/set_hvac_mapping.png)
 
@@ -449,7 +522,7 @@ draft_report
 
 Click **Edit prompt settings** and enter the following **System prompt**:
 ```
-You are the NYSDOE Emergency Response Agent. Produce a concise, operational 
+You are the NYSDOE Emergency Response Agent. Produce a concise, operational
 incident report using only the values provided. Never use placeholders.
 ```
 
@@ -460,34 +533,42 @@ Using the values below, produce a complete incident report.
 
 THREAT DETAILS:
 - District: {district_id}
+- District name: {district_name}
 - Threat type: {threat_type}
 - Severity: {severity}
 
-PRINCIPAL ALERT RESULTS:
-- Alerted count: {alerted_count}
-- Skipped count: {skipped_count}
+LOCATION DATA (from real NYC Location API):
+- Total schools in district (schoolDBN buildings): {school_count}
+- Total office buildings HVAC-secured (all district offices): {hvac_buildings_count}
 
-OFFICE ACTION RESULTS:
-- HVAC new status: {hvac_status}
-- Door new status: {door_status}
+PRINCIPAL ALERT RESULTS (school buildings):
+- Principals alerted: {alerted_count}
+- Principals skipped (no phone on record): {skipped_count}
+
+OFFICE ACTION RESULTS (all office buildings in district):
+- Bulk HVAC status: {hvac_status} ({hvac_buildings_count} buildings set to low_power)
+- Door lock status: {door_status}
 
 Produce the following three sections, clearly separated.
 
 ## INCIDENT SUMMARY
-Write a short operational summary for District {district_id} describing the 
-{threat_type} threat, the severity level, whether principals were alerted, 
-and whether office HVAC and door actions were completed.
+Write a short operational summary for District {district_id} ({district_name})
+describing the {threat_type} threat at severity {severity}. Confirm that principal
+SMS alerts were sent to all {school_count} school buildings and that HVAC was bulk-set
+to low_power across all {hvac_buildings_count} office buildings in the district,
+and that office doors were locked.
 
 ## ACTION LOG
-List the completed actions as bullets. Include principal alert results using 
-{alerted_count} and {skipped_count}. For office building actions, state the 
-new current HVAC status as '{hvac_status}' and the new current door lock 
-status as '{door_status}' — do not say 'status has been updated', show the 
-actual new values.
+List every completed action as a bullet:
+• bulkAlertPrincipals — {alerted_count} school principals alerted, {skipped_count} skipped
+• bulkSetHVAC — {hvac_buildings_count} office buildings set to low_power — status: {hvac_status}
+• setDoorState — superintendent office doors locked — status: {door_status}
 
 ## FOLLOW-UP
-List immediate follow-up steps for operators, especially if any principals 
-were skipped or if office actions need manual verification.
+List immediate follow-up steps for the district coordinator.
+If {skipped_count} > 0, note that those principals require manual outreach.
+If {hvac_status} is not 'bulk_updated', flag the HVAC action for manual verification.
+If {door_status} is not 'updated', flag the door lock for manual verification.
 ```
 
 Add the following **String input variables** for the prompt. Add test values so you can validate the prompt without running the whole flow:
@@ -495,12 +576,15 @@ Add the following **String input variables** for the prompt. Add test values so 
 | Variable name | Sample test value |
 |---|---|
 | `district_id` | `7` |
+| `district_name` | `COMMUNITY SCHOOL DISTRICT 07` |
 | `threat_type` | `tornado watch` |
 | `severity` | `high` |
-| `alerted_count` | `4` |
-| `skipped_count` | `1` |
-| `hvac_status` | `low_power` |
-| `door_status` | `locked` |
+| `school_count` | `41` |
+| `hvac_buildings_count` | `13` |
+| `alerted_count` | `41` |
+| `skipped_count` | `0` |
+| `hvac_status` | `bulk_updated` |
+| `door_status` | `updated` |
 
 Click **Generate response** to validate the prompt output looks like a proper incident report, then close the prompt settings:
 
@@ -512,15 +596,18 @@ Click **Generate response** to validate the prompt output looks like a proper in
 
 Click on the `draft_report` node and select **Edit data mapping**. Map each variable to the correct source:
 
-| Prompt variable | Map from |
-|---|---|
-| `district_id` | Flow inputs → `district_id` |
-| `threat_type` | Flow inputs → `threat_type` |
-| `severity` | Flow inputs → `severity` |
-| `alerted_count` | `alert_principals` → `alerted_count` |
-| `skipped_count` | `alert_principals` → `skipped_count` |
-| `hvac_status` | `set_office_hvac` → `status` |
-| `door_status` | `lock_office_doors` → `status` |
+| Prompt variable | Map from | Expression (fx) |
+|---|---|---|
+| `district_id` | Flow inputs | `str(flow.input.district_id)` |
+| `district_name` | `get_district_info` | `flow['get_district_info'].output['districtName']` |
+| `threat_type` | Flow inputs | `flow.input.threat_type` |
+| `severity` | Flow inputs | `flow.input.severity` |
+| `school_count` | `get_district_info` | `len(flow['get_district_info'].output['schools'])` |
+| `hvac_buildings_count` | `set_office_hvac` | `flow['set_office_hvac'].output['buildings_count']` |
+| `alerted_count` | `alert_principals` | `len(flow['alert_principals'].output.alerted)` |
+| `skipped_count` | `alert_principals` | `len(flow['alert_principals'].output.skipped)` |
+| `hvac_status` | `set_office_hvac` | `flow['set_office_hvac'].output['status']` |
+| `door_status` | `lock_office_doors` | `flow['lock_office_doors'].output.status` |
 
 ![alt text](./lab-assets/part1b/prompt_data_mapping.png)
 
