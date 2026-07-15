@@ -78,8 +78,8 @@ The Operations and Emergency Response flows call the **real NYC Department of Ed
    | Field | Value |
    |---|---|
    | **Token URL** | `https://apistg.schools.nyc/doe/stg/v1/oauth/oauth2/token` |
-   | **Client ID** | `c14a0da2b3111279c05e959c43dfbaef` |
-   | **Client Secret** | `7b5552e42e5adf2ca9e7405bb0e706bb` |
+   | **Client ID** | `Ask your instructor` |
+   | **Client Secret** | `Ask your instructor` |
    | **Scope** | `location` |
 
 ![alt text](../Screenshots/fillincreds.png)
