@@ -368,27 +368,34 @@ The disruption started today and we need 8 rooms starting 2025-07-15.
 
 ### The flow we are building:
 
-![alt text](./lab-assets/part1b/flow_overview.png)
+![alt text](../Screenshots/emergencyflow.png)
+
+We will now walk through creating the above workflow step by step.
 
 ---
 
-### Step 1: Create the threat_response_flow and configure inputs and outputs
+### Step 1: Create the Emergency Response Agent
 
-In the **Agent Builder**, click **Create Agent** → **Create from scratch**. We are going to create the **Emergency Response Agent** now and build the flow directly inside it.
+1. In the **Agent Builder** (Click on the hamburger menu, click Build), click **Create Agent** → **Create from scratch**.
+
+![alt text](../Screenshots/createagent.png)
 
 Name the agent:
 ```
 emergency_response_agent
 ```
 
-Description:
+Give it the following description:
 ```
 District-Wide Threat Response Agent. Triggered by a severe weather warning for a specific geographic district. Differentiates response by building type: for schools it bulk-alerts every principal by SMS; for office buildings it switches HVAC to low-power mode and remotely locks all doors. Returns a full timestamped incident report.
 ```
 
-Select **meta-llama/llama-3-3-70b-instruct** from the **Model** drop-down.
+Then, click **Create**.
 
-Enter the following **Behavior** (Instructions):
+![alt text](../Screenshots/namedescemergency.png)
+
+2. Scroll down to the **Behavior** (Instructions) section and enter:
+
 ```
 You are the NYSDOE Emergency Response Agent for district-wide threat response.
 
@@ -403,236 +410,285 @@ were skipped or any office actions need verification, highlight them so the
 operator can follow up.
 ```
 
-Click **Create**. Now scroll down to **Toolset**, click **Add Tool**, and select **Create an agentic workflow**.
+![alt text](../Screenshots/emergencyagentbehavior.png)
 
-Click the **pencil icon** on the flow name and update it to:
+---
+
+### Step 2: Create the Emergency Response Workflow
+
+Now we will create the Emergency Response Workflow within our Emergency Response Agent.
+
+1. Scroll down to the **Toolset** section and click **Add Tool**:
+
+![alt text](../Screenshots/toolsetaddtoolsemergency.png)
+
+2. Select **Agentic workflow**:
+
+![alt text](../Screenshots/createagenticworkflow.png)
+
+3. The flow editor will open and prompt you to name your agentic workflow. You can also lick **edit details** to update the Name and Description fields, then click **Done** to save.
+
+![alt text](../Screenshots/createagenticworkflow.png)
+
+Change the name to:
 ```
 threat_response_flow
 ```
 
-Update the description to:
+Change the description to:
 ```
 Finds district buildings, bulk-alerts school principals, secures office HVAC and doors, and drafts a full incident report.
 ```
 
-Click **Add output**, select **String**, name the variable:
-```
-incident_summary
-```
-and click **Add**. Click **Save**.
+![alt text](../Screenshots/renameemergencyflow.png)
 
----
+4. Click on the green "play" button to open the **Inputs**. Click **Add** to add input variables to your workflow.
 
-### Step 2: Add the get_district_info tool node
+![alt text](../Screenshots/addinputsemer.png)
 
-Click on the **Start** node and select **Edit flow inputs**. Add the following input variables:
+5. The same way you did for the Operations Flow, add the following input variables, making sure to set the correct variable type and toggle Required for each one:
 
 | Variable name | Type | Required | Description |
 |---|---|---|---|
 | `district_id` | String | Yes | Affected district, e.g. `"7"` |
 | `threat_type` | String | Yes | e.g. `"tornado watch"` |
-| `severity` | String | No | Default: `"high"` |
+| `severity` | String | Yes | e.g. `"high"` |
 | `alert_message` | String | No | Optional custom SMS override text |
 
-Hover over the arrow from Start to End and click **+**. Select **Tool**, search for `getDistrictAdminDetails`, select it, and rename the node to:
-```
-get_district_info
-```
+**Note:** Make sure you toggle required **OFF** for `alert_message`
 
-Click **Edit data mapping** and set:
+The Inputs page should look like this when you're done:
 
-| Input field | Expression |
-|---|---|
-| `districtCode` | `str(flow.input.district_id).zfill(2)` |
-| `serviceAccountID` | `"api.ibmtest"` |
-| `Components` | `"schools,offices"` |
+![alt text](../Screenshots/allinputsemergency.png)
+
+6. Click on the dashed box labeled **Add your first step +** and click **Call a tool**.
+
+![alt text](../Screenshots/addfirststepcalltoolemer.png)
+
+7. In the **Tools** search bar, type `getDistrictAdminDetails` and drag and drop it onto the flow:
+
+![alt text](../Screenshots/getdistrictadmindragemer.png)
 
 > 💡 This calls the real NYC Location API. The response gives you `schools[].schoolDBN` (school building codes) and `offices[].locationCode` (office building codes). The next nodes use these to alert principals and secure the superintendent office.
 
-![alt text](./lab-assets/part1b/find_buildings_mapping.png)
+8. Hover over the arrow after the "Get schools and offices" node and click **+**. Select **Call a tool**, search for `bulkAlertPrincipals`, and drag and drop it onto the flow:
 
----
+![alt text](../Screenshots/bulkalergdrag.png)
 
-### Step 3: Add the alert_principals tool node
+9. Hover over the arrow after the "Alert ALL school principals" node and click **+**. Select **Call a tool**, search for `bulkSetHVAC`, and drag and drop it onto the flow:
 
-Hover over the arrow after `find_buildings` and click **+**. Select **Tool**, search for `bulkAlertPrincipals`, select it, and rename the node to:
-```
-alert_principals
-```
+![alt text](../Screenshots/bulkhvacdrag.png)
 
-Click **Edit data mapping** and set:
+> 💡 `bulkSetHVAC` targets **all buildings in the district** by `districtCode` in a single API call. The response includes `buildings_count` so the prompt can report exactly how many offices were secured.
 
-| Input field | Expression |
-|---|---|
-| `district_id` | `int(flow.input.district_id)` |
-| `message` | `flow.input.alert_message if flow.input.alert_message else "[NYSDOE EMERGENCY — District " + flow.input.district_id + "] SEVERITY: " + flow.input.severity.upper() + ". Threat: " + flow.input.threat_type.upper() + ". Initiate shelter-in-place protocol immediately. Account for all students and staff. Await further instructions."` |
-| `triggered_by` | `"Emergency Response Agent"` |
-| `severity` | `flow.input.severity` |
+10. Hover over the arrow after the "Set HVAC mode" node and click **+**. Select **Call a tool**, search for `bulksetdoors`, and drag and drop it onto the flow:
 
-![alt text](./lab-assets/part1b/alert_principals_mapping.png)
+![alt text](../Screenshots/setdoorstatedrag.png)
 
----
+11. Hover over the arrow after the "Lock or unlock" node and click **+**. Select **Add a flow activity** then click **Generative prompt**:
 
-### Step 4: Add the set_office_hvac tool node
+![alt text](../Screenshots/addflowgenpromptemer.png)
 
-Hover over the arrow after `alert_principals` and click **+**. Select **Tool**, search for `bulkSetHVAC`, select it, and rename the node to:
-```
-set_office_hvac
-```
+12. In the **System prompt** enter the following:
 
-Click **Edit data mapping** and set:
-
-> 💡 `bulkSetHVAC` targets **all buildings in the district** by `districtCode` in a single API call — no need to look up individual office building codes. The response includes `buildings_count` so the prompt can report exactly how many offices were secured.
-
-| Input field | Expression |
-|---|---|
-| `districtCode` | `str(flow.input.district_id).zfill(2)` |
-| `mode` | `"low_power"` |
-| `triggered_by` | `"Emergency Response Agent"` |
-| `reason` | `flow.input.threat_type.title() + " — District " + flow.input.district_id + " (" + flow.input.severity + " severity)"` |
-
-![alt text](./lab-assets/part1b/set_hvac_mapping.png)
-
----
-
-### Step 5: Add the lock_office_doors tool node
-
-Hover over the arrow after `set_office_hvac` and click **+**. Select **Tool**, search for `setDoorState`, select it, and rename the node to:
-```
-lock_office_doors
-```
-
-Click **Edit data mapping** and set:
-
-| Input field | Expression |
-|---|---|
-| `building_id` | `next((b.building_id for b in flow['find_buildings'].output if b.building_type == 'office'), '')` |
-| `action` | `"locked"` |
-| `triggered_by` | `"Emergency Response Agent"` |
-| `reason` | `flow.input.threat_type.title() + " — District " + flow.input.district_id + " (" + flow.input.severity + " severity)"` |
-| `severity` | `flow.input.severity` |
-
-![alt text](./lab-assets/part1b/lock_doors_mapping.png)
-
----
-
-### Step 6: Add the draft_report prompt node
-
-Hover over the arrow after `lock_office_doors` and click **+**. Select **Generative prompt** and rename the node to:
-```
-draft_report
-```
-
-Click **Edit prompt settings** and enter the following **System prompt**:
 ```
 You are the NYSDOE Emergency Response Agent. Produce a concise, operational
 incident report using only the values provided. Never use placeholders.
 ```
 
-Enter the following **User prompt**:
+![alt text](../Screenshots/emergencysystemprompt.png)
+
+13. In the **User prompt** enter the following:
+
 ```
 A severe weather warning has triggered a district-wide threat response.
 Using the values below, produce a complete incident report.
 
 THREAT DETAILS:
-- District: {district_id}
-- District name: {district_name}
-- Threat type: {threat_type}
-- Severity: {severity}
-
-LOCATION DATA (from real NYC Location API):
-- Total schools in district (schoolDBN buildings): {school_count}
-- Total office buildings HVAC-secured (all district offices): {hvac_buildings_count}
+- District: {flow.input.district_id}
+- Threat type: {flow.input.threat_type}
+- Severity: {flow.input.severity}
 
 PRINCIPAL ALERT RESULTS (school buildings):
-- Principals alerted: {alerted_count}
-- Principals skipped (no phone on record): {skipped_count}
+- Principals alerted: {flow["Alert ALL school principals in a district"].output.alerted_count}
+- Principals skipped (no phone on record): {flow["Alert ALL school principals in a district"].output.skipped_count}
 
 OFFICE ACTION RESULTS (all office buildings in district):
-- Bulk HVAC status: {hvac_status} ({hvac_buildings_count} buildings set to low_power)
-- Door lock status: {door_status}
+- Bulk HVAC status: {flow["Set HVAC mode for ALL buildings in a district"].output.status}
+- Door lock status: {flow["Lock or unlock ALL buildings in a district"].output.status}
 
 Produce the following three sections, clearly separated.
 
 ## INCIDENT SUMMARY
-Write a short operational summary for District {district_id} ({district_name})
-describing the {threat_type} threat at severity {severity}. Confirm that principal
-SMS alerts were sent to all {school_count} school buildings and that HVAC was bulk-set
-to low_power across all {hvac_buildings_count} office buildings in the district,
-and that office doors were locked.
+Write a short operational summary for District {flow.input.district_id} describing
+the {flow.input.threat_type} threat at severity {flow.input.severity}. Confirm that
+principal SMS alerts were sent, that HVAC was bulk-set to low_power across all office
+buildings in the district, and that office doors were locked.
 
 ## ACTION LOG
 List every completed action as a bullet:
-• bulkAlertPrincipals — {alerted_count} school principals alerted, {skipped_count} skipped
-• bulkSetHVAC — {hvac_buildings_count} office buildings set to low_power — status: {hvac_status}
-• setDoorState — superintendent office doors locked — status: {door_status}
+• bulkAlertPrincipals — {flow["Alert ALL school principals in a district"].output.alerted_count} school principals alerted, {flow["Alert ALL school principals in a district"].output.skipped_count} skipped
+• bulkSetHVAC — {flow["Set HVAC mode for ALL buildings in a district"].output.buildings_count} office buildings set to low_power — status: {flow["Set HVAC mode for ALL buildings in a district"].output.status}
+• setDoorState — superintendent office doors locked — status: {flow["Lock or unlock ALL buildings in a district"].output.status}
 
 ## FOLLOW-UP
 List immediate follow-up steps for the district coordinator.
-If {skipped_count} > 0, note that those principals require manual outreach.
-If {hvac_status} is not 'bulk_updated', flag the HVAC action for manual verification.
-If {door_status} is not 'updated', flag the door lock for manual verification.
+If {flow["Alert ALL school principals in a district"].output.skipped_count} > 0, note that those principals require manual outreach.
+If {flow["Set HVAC mode for ALL buildings in a district"].output.status} is not 'bulk_updated', flag the HVAC action for manual verification.
+If {flow["Lock or unlock ALL buildings in a district"].output.status} is not 'updated', flag the door lock for manual verification.
 ```
 
-Add the following **String input variables** for the prompt. Add test values so you can validate the prompt without running the whole flow:
+![alt text](../Screenshots/emergencyuserprompt.png)
 
-| Variable name | Sample test value |
-|---|---|
-| `district_id` | `7` |
-| `district_name` | `COMMUNITY SCHOOL DISTRICT 07` |
-| `threat_type` | `tornado watch` |
-| `severity` | `high` |
-| `school_count` | `41` |
-| `hvac_buildings_count` | `13` |
-| `alerted_count` | `41` |
-| `skipped_count` | `0` |
-| `hvac_status` | `bulk_updated` |
-| `door_status` | `updated` |
+Once you are satisfied with the prompts, close the prompt settings.
 
-Click **Generate response** to validate the prompt output looks like a proper incident report, then close the prompt settings:
+14. Finally, click **Done** at the top left hand corner to close the flow editor. Your completed flow should look like this:
 
-![alt text](./lab-assets/part1b/prompt_test_output.png)
+![alt text](../Screenshots/emergencyflow.png)
 
 ---
 
-### Step 7: Map the prompt inputs and connect the output
+### Step 3: Test the Emergency Response Agent
 
-Click on the `draft_report` node and select **Edit data mapping**. Map each variable to the correct source:
+1. In the right hand agent chat preview page, send the following message to the chat box and hit **Send**:
 
-| Prompt variable | Map from | Expression (fx) |
-|---|---|---|
-| `district_id` | Flow inputs | `str(flow.input.district_id)` |
-| `district_name` | `get_district_info` | `flow['get_district_info'].output['districtName']` |
-| `threat_type` | Flow inputs | `flow.input.threat_type` |
-| `severity` | Flow inputs | `flow.input.severity` |
-| `school_count` | `get_district_info` | `len(flow['get_district_info'].output['schools'])` |
-| `hvac_buildings_count` | `set_office_hvac` | `flow['set_office_hvac'].output['buildings_count']` |
-| `alerted_count` | `alert_principals` | `len(flow['alert_principals'].output.alerted)` |
-| `skipped_count` | `alert_principals` | `len(flow['alert_principals'].output.skipped)` |
-| `hvac_status` | `set_office_hvac` | `flow['set_office_hvac'].output['status']` |
-| `door_status` | `lock_office_doors` | `flow['lock_office_doors'].output.status` |
-
-![alt text](./lab-assets/part1b/prompt_data_mapping.png)
-
-Click on the **End** node and connect `incident_summary` to **draft_report → value**.
-
-Click **Done** to close the flow editor. Your completed flow should look like this:
-
-![alt text](./lab-assets/part1b/completed_flow.png)
-
-**Test the Emergency Response Agent** by clicking **Preview** and sending:
 ```
 A tornado watch has been issued for District 7. Severity is HIGH.
 Take all necessary emergency actions across all buildings in the district.
 ```
 
-✅ The agent should return an incident report with an INCIDENT SUMMARY, ACTION LOG showing the new HVAC and door status values, and a FOLLOW-UP section.
+![alt text](../Screenshots/emergencymessage.png)
 
-![alt text](./lab-assets/part1b/emergency_agent_test.png)
+✅ The agent should call the `threat_response_flow tool` and return an incident report with an INCIDENT SUMMARY, ACTION LOG showing the new HVAC and door status values, and a FOLLOW-UP section. You can click on the **Show Reasoning** tab to open up the step by step reasoning process.
+
+![alt text](../Screenshots/emergencyoutput1.png)
+![alt text](../Screenshots/emergencyoutput2.png)
 
 Click **Save**.
 
 ✅ The `threat_response_flow` is built and the `emergency_response_agent` is ready.
+
+---
+
+## Part 3 — Building Agents and Wiring Everything Together
+
+Both specialist agents are already built from Parts 1 and 2. In this part you will connect an external research agent and wire everything together under the Orchestrator.
+
+---
+
+### Build and Connect the School Research Assistant (watsonx.ai)
+
+In this section you will build the **School Research Assistant** directly inside **watsonx.ai** as a LangGraph agent, then connect it to Watson Orchestrate as an external agent so the Orchestrator can call it.
+
+---
+
+#### Step 1: Open watsonx.ai and create a new AI Agent
+
+Open a new browser tab and navigate to your watsonx.ai instance. In the left navigation click **Projects**, then open the lab project provided by your instructor.
+
+Inside the project click **New asset** → **AI Agent**:
+
+![alt text](./lab-assets/part2/wxai_new_asset.png)
+
+---
+
+#### Step 2: Configure the agent name and model
+
+Give the agent the name:
+```
+school_research_assistant
+```
+
+Select a model — **ibm/granite-3-3-8b-instruct** or **meta-llama/llama-3-3-70b-instruct** both work well for this use case.
+
+![alt text](./lab-assets/part2/wxai_agent_name_model.png)
+
+---
+
+#### Step 3: Add the system prompt
+
+In the **System instructions** field enter:
+
+```
+You are a NYSDOE School Research Assistant. When given a research query:
+1. Use the Google Search tool to find relevant, current information.
+2. Filter results for New York State education context where possible.
+3. Return a concise, structured summary (3–5 bullet points) with source URLs.
+Focus areas: emergency protocols, shelter locations, district policies, school closures.
+```
+
+![alt text](./lab-assets/part2/wxai_system_prompt.png)
+
+---
+
+#### Step 4: Add the Google Search tool
+
+In the **Tools** panel, click **Add tool** and select **Google Search** from the list of available tools:
+
+![alt text](./lab-assets/part2/wxai_add_google_search.png)
+
+> 💡 If Google Search does not appear in the tools list, ask your instructor — it may need to be enabled at the project level first.
+
+---
+
+#### Step 5: Test the agent in watsonx.ai
+
+Click **Preview** and send the following test query:
+
+```
+What are the current NYSDOE emergency weather protocols for school districts?
+```
+
+✅ You should see the agent call the Google Search tool and return a structured summary with bullet points and source URLs.
+
+![alt text](./lab-assets/part2/wxai_agent_test.png)
+
+---
+
+#### Step 6: Deploy the agent
+
+Click **Save**, then click **Deploy** to publish the agent as a hosted endpoint.
+
+Select a deployment space (your instructor will tell you which space to use), give the deployment a name, and click **Deploy**:
+
+![alt text](./lab-assets/part2/wxai_deploy.png)
+
+Once deployment is complete, open the deployment details and copy the **Endpoint URL** — you will need it in the next step.
+
+You will also need an **API key**. In the top-right of the IBM Cloud / watsonx.ai interface, go to **Manage → API Keys** and create a new key. Copy and save it.
+
+![alt text](./lab-assets/part2/wxai_endpoint_url.png)
+
+---
+
+#### Step 7: Connect the deployed agent to Watson Orchestrate
+
+Switch back to the Watson Orchestrate browser tab. In the **Agent Builder**, click **Add External Agent**:
+
+![alt text](./lab-assets/part2/add_external_agent.png)
+
+Fill in the details using the endpoint and key from the previous step:
+- **Name:** `school_research_assistant`
+- **Title:** `School Research Assistant`
+- **Endpoint URL:** *(the URL you copied from the watsonx.ai deployment)*
+- **Authentication:** API Key
+- **API Key:** *(the API key you created)*
+
+![alt text](./lab-assets/part2/external_agent_config.png)
+
+Click **Test Connection**. You should see a green success indicator:
+
+![alt text](./lab-assets/part2/connection_test_success.png)
+
+**Test the connection** by opening the agent preview in Orchestrate and sending:
+```
+What are the current NYSDOE emergency weather protocols for school districts?
+```
+
+✅ You should receive the same structured summary you saw in watsonx.ai, now routed through the Orchestrate connection.
+
+Click **Save**.
+
 
 ---
 
