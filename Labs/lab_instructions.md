@@ -546,8 +546,31 @@ Once you are satisfied with the prompts, close the prompt settings.
 
 ![alt text](../Screenshots/emergencyflow.png)
 
+
 ---
 
+
+### Step 3: Test the Emergency Response Agent
+
+1. In the right hand agent chat preview page, send the following message to the chat box and hit **Send**:
+
+```
+A tornado watch has been issued for District 7. Severity is HIGH.
+Take all necessary emergency actions across all buildings in the district.
+```
+
+![alt text](../Screenshots/emergencymessage.png)
+
+✅ The agent should call the `threat_response_flow tool` and return an incident report with an INCIDENT SUMMARY, ACTION LOG showing the new HVAC and door status values, and a FOLLOW-UP section. You can click on the **Show Reasoning** tab to open up the step by step reasoning process.
+
+![alt text](../Screenshots/emergencyoutput1.png)
+![alt text](../Screenshots/emergencyoutput2.png)
+
+Click **Save**.
+
+✅ The `threat_response_flow` is built and the `emergency_response_agent` is ready.
+
+---
 
 ## Part 3 — Building the Orchestrator Agent
 
@@ -578,7 +601,7 @@ Then, click **Create**.
 ```
 You are the NYSDOE Orchestrator Agent. Your sole job is to triage incoming
 triggers and delegate to the appropriate specialist agent. Never attempt to
-handle facility operations or emergency protocols yourself.
+handle facility operations or emergency protocols yourself.c
 
 ROUTING RULES:
 
@@ -610,11 +633,15 @@ BEHAVIOUR:
 
 ![alt text](../Screenshots/addagent.png)
 
-2. Search for and add the **Operations Agent**:
+2. Click on **Local instance** to choose from a list of available agents, because we have already created our **Operations Agent** and **Emergency Response Agent**
+
+![alt text](../Screenshots/addfromlocal.png)
+
+3. Search for the **Operations Agent** you made in **Part 1** and check the box next to it:
 
 ![alt text](../Screenshots/addoperationsagent.png)
 
-3. Repeat and add the **Emergency Response Agent**:
+4. Repeat and check the box for the **Emergency Response Agent**. Next, click **Add to Agent** to add both selected agents to your **Orchestrator agent**:
 
 ![alt text](../Screenshots/addemergencyagent.png)
 
@@ -622,39 +649,14 @@ BEHAVIOUR:
 
 ![alt text](../Screenshots/bothagentsadded.png)
 
-4. Click **Save**.
-
----
-
-
-### Step 3: Test the Emergency Response Agent
-
-1. In the right hand agent chat preview page, send the following message to the chat box and hit **Send**:
-
-```
-A tornado watch has been issued for District 7. Severity is HIGH.
-Take all necessary emergency actions across all buildings in the district.
-```
-
-![alt text](../Screenshots/emergencymessage.png)
-
-✅ The agent should call the `threat_response_flow tool` and return an incident report with an INCIDENT SUMMARY, ACTION LOG showing the new HVAC and door status values, and a FOLLOW-UP section. You can click on the **Show Reasoning** tab to open up the step by step reasoning process.
-
-![alt text](../Screenshots/emergencyoutput1.png)
-![alt text](../Screenshots/emergencyoutput2.png)
-
-Click **Save**.
-
-✅ The `threat_response_flow` is built and the `emergency_response_agent` is ready.
-
 ---
 
 ### Step 3: Test the Orchestrator Agent
 
-1. In the right hand agent chat preview page, send the following message to test **Use Case 1 — Facility Relocation**:
+1. In the right hand agent chat preview page, send the following message to test **The Operations Use Case — Facility Relocation**:
 
 ```
-A water main broke at M007 in District 4. We need to relocate immediately.
+A water main broke at building code M007 in District 4. We need to relocate immediately.
 The disruption started today and we need 8 rooms starting 2025-07-15.
 ```
 
@@ -664,7 +666,7 @@ The disruption started today and we need 8 rooms starting 2025-07-15.
 
 ![alt text](../Screenshots/orchestratoroutput1.png)
 
-2. Now send the following message to test **Use Case 2 — Emergency Threat Response**:
+2. Now send the following message to test **The Emergency Use Case — Threat Response**:
 
 ```
 A tornado watch has been issued for District 7. Severity is HIGH.
