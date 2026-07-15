@@ -96,50 +96,45 @@ The Operations and Emergency Response flows call the **real NYC Department of Ed
 
 > ✅ You should see the connection status change to **Connected**. If it shows an error, double-check the Client ID and Secret — make sure there are no extra spaces.
 
-THIS IS WHERE I LEFT OFF 7/14 4:30 PM
 ---
 
-### Step B: Import the NYC Location API tool
+### Step B: Import the necessary tools (NYC Location API tool, Security API tool, and Facilities API tool) 
 
-This tool calls the real NYSDOE Location API and returns the list of schools (`schoolDBN`) and offices (`locationCode`) for a district.
+Your instructor will provide you with three yaml files for each of these tools. If you don't have these tools handy yet, please ask an instructor. 
 
-1. In Watson Orchestrate, click **Tools** in the left navigation panel.
+The NYS Location API tool calls the real NYSDOE Location API and returns the list of schools (`schoolDBN`) and offices (`locationCode`) for a district. The Security and Facilities APIs are mock services that simulate door locking, HVAC control, room booking, and principal alerts. They accept the same `schoolDBN` and `locationCode` values returned by the real Location API.
 
-2. Click **Import tool**.
+The file names are as follows:
+nysdoe_location_api.yaml
+nysdoe_facilities_api.yaml
+nysdoe_security_api.yaml
 
-3. Click **Upload file** and select:
-   ```
-   tools/nyc_location_api.yaml
-   ```
 
-4. When prompted to select a connection, choose **location_api**.
+1. In Watson Orchestrate, click on the hamburger menu in the top left corner, and click **Build** in the left navigation panel.
 
-5. Click **Import**.
+![alt text](../Screenshots/buildimporttools.png)
 
-6. Confirm the tool `getDistrictAdminDetails` appears in your tool list.
+2. Navigate to the **All Tools** tab, and click **Create tool**.
 
-> 💡 **What this tool returns:**
-> - `schools[].schoolDBN` — the building code for each school building in the district
-> - `offices[].locationCode` — the building code for each office building in the district
->
-> These are the real NYCDOE codes used by the Security and Facilities APIs to lock doors, control HVAC, and send principal alerts.
+![alt text](../Screenshots/alltoolscreate.png)
 
----
+3. Click **OpenAPI** to import your OpenAPI yaml files. On the **Upload files** page, either drag and drop your file or click to upload the yaml file you recieved from your instructor. Then, click **Next**:
 
-### Step C: Import the mock Security and Facilities API tools
+![alt text](../Screenshots/selectopenapi.png)
+![alt text](../Screenshots/clickuploadtool.png)
 
-The Security and Facilities APIs are mock services that simulate door locking, HVAC control, room booking, and principal alerts. They accept the same `schoolDBN` and `locationCode` values returned by the real Location API.
 
-1. In Watson Orchestrate, click **Tools** → **Import tool**.
+4. On the **Operations** page, click the topmost check box to select all tools. Then, click **Next**.
 
-2. Upload the following files one at a time (no connection required for any of them):
+![alt text](../Screenshots/selectalltools.png)
 
-   | File | Tools it provides |
-   |---|---|
-   | `tools/nysdoe_facilities_api.yaml` | `bookBuilding`, `bulkSetHVAC` |
-   | `tools/nysdoe_security_api.yaml` | `setDoorState`, `bulkAlertPrincipals` |
+5. On the **Connections** page, select the connection you made in **Step A**. (It should be named NYS DOE Location API). Click **Done**.
 
-3. After importing both files confirm the following tools appear in your tool list:
+![alt text](../Screenshots/selectconnection.png)
+
+6. Repeat the above steps for each yaml file. **Note:** the security and factilities yamls contain multiple tools, so make sure you select all tools. Security and Facilties yaml upload will **not** require a connection set up.
+
+7. After importing all 3 files confirm the following tools appear in your tool list:
 
    - `getDistrictAdminDetails` *(Location API — real)*
    - `bookBuilding` *(Facilities API — mock)*
@@ -148,6 +143,7 @@ The Security and Facilities APIs are mock services that simulate door locking, H
    - `bulkAlertPrincipals` *(Security API — mock)*
 
 If any are missing, ask your instructor before proceeding.
+
 
 ---
 
