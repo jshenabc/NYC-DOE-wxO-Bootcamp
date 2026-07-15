@@ -73,7 +73,7 @@ The Operations and Emergency Response flows call the **real NYC Department of Ed
 ![alt text](../Screenshots/configureconnection.png)
 
 
-5. Fill in the following fields, you can leave the other fields as is. Then, click **Next**:
+5. Fill in the following fields, you can leave the other fields as is. Then, scroll down to select **Team credentials** as the credential type, click **Next** to continue:
 
    | Field | Value |
    |---|---|
@@ -83,6 +83,8 @@ The Operations and Emergency Response flows call the **real NYC Department of Ed
    | **Scope** | `location` |
 
 ![alt text](../Screenshots/fillincreds.png)
+
+![alt text](../Screenshots/credential_type.png)
 
 6. In the **Configure live connection** page, you can click **Paste draft configuration**. It will automatically populate the values you filled in for the draft configuration.
 
