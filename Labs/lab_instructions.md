@@ -134,7 +134,7 @@ nysdoe_security_api.yaml
 
 6. Repeat the above steps for each yaml file. **Note:** the security and factilities yamls contain multiple tools, so make sure you select all tools. Security and Facilties yaml upload will **not** require a connection set up.
 
-7. After importing all 3 files confirm the following tools appear in your tool list:
+7. ✅ After importing all 3 files confirm the following tools appear in your tool list:
 
    - `getDistrictAdminDetails` *(Location API — real)*
    - `bookBuilding` *(Facilities API — mock)*
@@ -144,40 +144,80 @@ nysdoe_security_api.yaml
 
 If any are missing, ask your instructor before proceeding.
 
-
 ---
-
-## Part 1 — Building the Operations Workflow (Use Case 1)
+## Part 1 — Building the Operations Use Case - "Automated District Relocation"
 
 > **Scenario:** A water main has broken at a middle school in District 4. The Operations workflow will automatically find a relocation building, book rooms, and draft parent and staff notification emails.
 
 ### The flow we are building:
 
-![alt text](./lab-assets/part1/flow_overview.png)
+![alt text](../Screenshots/operationsflow.png)
 
 We will now walk through creating the above workflow step by step.
 
 ---
 
-### Step 1: Create the relocation_flow and configure inputs and outputs
+### Step 1: Create the Operations Agent
 
-Open the Agent Builder in Watson Orchestrate by clicking **Build → Agent Builder** in the main menu.
+1. Open the Agent Builder in Watson Orchestrate by clicking **Build** from the lefthand navigation menu.
 
-Click **Create Agent**, then select **Create from scratch**. We are going to create a temporary agent to build and test our flow in — we will create the real Operations Agent in Part 2.
+![alt text](../Screenshots/buildimporttools.png)
 
-Name the agent **Operations Flow Test** and click **Create**.
+2. Click **Create Agent**, then select **Create from scratch**.
 
-Scroll down to the **Toolset** section and click **Add Tool**:
+Name the agent:
+```
+operations_agent
+```
 
-![alt text](./lab-assets/part1/add_tool.png)
+Give it the following description:
+```
+Handles NYSDOE district-level facility disruptions. Given a disruption trigger (water main break, power outage, building closure), this agent finds available relocation buildings, books rooms, and drafts parent and staff notification emails.
+```
 
-Select **Create an agentic workflow**:
+Then, click **Create**
 
-![alt text](./lab-assets/part1/create_workflow.png)
+![alt text](../Screenshots/opagentname.png)
 
-The flow editor will open. Click the **pencil icon** next to the flow name in the top-left corner to edit the flow name and description:
+4. Scroll down to the **Behavior** (Instructions) section and enter:
 
-![alt text](./lab-assets/part1/edit_flow_name.png)
+```
+You are the NYSDOE Operations Agent. When a facility disruption is reported,
+invoke the relocation_flow tool immediately — do not ask questions first.
+
+Extract these inputs from the message:
+- district_id, affected_building_name, affected_buildingCode, disruption_type, rooms_needed, start_date
+
+affected_buildingCode is the schoolDBN of the disrupted building (e.g. "M057"). It is used to
+prevent that building from being booked as its own relocation site. If the user does not provide
+it, ask for it once before invoking the flow.
+
+If district_id cannot be determined, ask for it once before invoking the flow.
+
+Present the full flow output to the user (booking confirmation, relocation plan,
+parent email, staff email), then ask:
+"Would you like to send these notifications? Reply YES to confirm or NO to discard."
+
+If no suitable building is found, report it clearly and suggest escalating to the Orchestrator.
+```
+
+![alt text](../Screenshots/opagentbehavior.png)
+
+
+### Step 2: Create the Operations Workflow
+
+Now we will create the Operations Workflow within our Operations Agent. 
+
+1. Scroll down to the **Toolset** section and click **Add Tool**:
+
+![alt text](../Screenshots/toolsetaddtool.png)
+
+2. Select **Agentic workflow**:
+
+![alt text](../Screenshots/createagenticworkflow.png)
+
+3. The flow editor will open and prompt you to name your agentic workflow. You can also click edit details to update the Name and Description fields. Then clikc **Done** to save.
+
 
 Change the name to:
 ```
@@ -189,119 +229,64 @@ Change the description to:
 Finds available relocation buildings in a district, books rooms, and drafts parent and staff notification emails.
 ```
 
-Click **Add output** to define the output variable for the flow:
+![alt text](../Screenshots/renameflow.png)
 
-![alt text](./lab-assets/part1/add_output.png)
+4. Click on the green "play" button to open the **Inputs**. Click **Add** to add input variables to your workflow. 
 
-Select **String** for the type, name the variable:
-```
-relocation_summary
-```
-and click **Add**.
+![alt text](../Screenshots/addinputs.png)
 
-Click **Save**. Your flow should now have a Start node and an End node, with `relocation_summary` configured as the output:
+5. Select the variable type **String** and name your variable **district_id**. Make sure the **Required** field is toggled **ON**. Then, click **Add**
 
-![alt text](./lab-assets/part1/flow_start.png)
+![alt text](../Screenshots/selectvariabletype.png)
 
-You can verify the output was added by clicking on the **End** node:
+![alt text](../Screenshots/namevariableadd.png)
 
-![alt text](./lab-assets/part1/end_node_output.png)
-
----
-
-### Step 2: Add the get_district_info tool node
-
-Hover over the arrow connecting the Start node to the End node and click on the **+** sign:
-
-![alt text](./lab-assets/part1/add_step.png)
-
-Select **Tool**. Search for `getDistrictAdminDetails` and select it:
-
-![alt text](./lab-assets/part1/select_tool.png)
-
-Click on the new node, then click the **pencil icon** to rename it to:
-```
-get_district_info
-```
-
-Click on **Edit data mapping** to configure the inputs for this tool:
-
-![alt text](./lab-assets/part1/edit_data_mapping.png)
-
-Map the following inputs. For each, click the **expression icon** (`fx`) in the corresponding row and enter the expression:
-
-| Input field | Expression |
-|---|---|
-| `districtCode` | `str(flow.input.district_id).zfill(2)` |
-| `serviceAccountID` | `"api.ibmtest"` |
-| `Components` | `"schools,offices"` |
-
-> 💡 `zfill(2)` zero-pads the district ID so `"4"` becomes `"04"` and `"7"` becomes `"07"` — the format the API expects.
-
-After setting the mappings, click on the **Start** node and select **Edit flow inputs**:
-
-![alt text](./lab-assets/part1/edit_flow_inputs.png)
-
-Add the following input variables. For each, click **Add variable**, select the type, enter the name and description, then click **Add**:
+6. Repeat this process for the following variables, making sure to set the correct variable type and to toggle required for each one.
 
 | Variable name | Type | Required | Description |
 |---|---|---|---|
 | `district_id` | String | Yes | Numeric district ID, e.g. `"4"` |
-| `affected_building_name` | String | Yes | Name of the building being evacuated |
+| `affected_building_code` | String | Yes | schoolDBN of the disrupted building, e.g. `"M057"` — prevents it from being booked as its own relocation site |
 | `disruption_type` | String | Yes | e.g. `"water main break"` |
-| `rooms_needed` | Integer | No | Default: `8` |
+| `rooms_needed` | Integer | Yes | Number of rooms needed |
 | `start_date` | String | Yes | Format: `YYYY-MM-DD` |
 
-![alt text](./lab-assets/part1/flow_inputs_defined.png)
+7. ✅ If you click on the green play button to view all inputs, it should look something like this: 
 
----
+![alt text](../Screenshots/allinputsoperations.png)
 
-### Step 3: Add the book_rooms tool node
+8. Click on the dashed box labeled **Add your first step +** and click **Call a tool**. 
 
-Hover over the arrow connecting `get_district_info` to the End node and click **+**. Select **Tool** and search for `bookBuilding`. Select it and rename the node to:
-```
-book_rooms
-```
+![alt text](../Screenshots/addfirststepcalltool.png)
 
-Click **Edit data mapping** and set the following input mappings:
+9. A tools page will open on the left side of the screen. In the search bar, type in `getDistrictAdminDetails` and drag and drop it to the flow:
 
-| Input field | Expression |
-|---|---|
-| `buildingCode` | `flow['get_district_info'].output['schools'][0]['schoolDBN']` |
-| `requester` | `"Operations Agent"` |
-| `reason` | `flow.input.disruption_type + " at " + flow.input.affected_building_name` |
-| `rooms_needed` | `flow.input.rooms_needed` |
-| `start_date` | `flow.input.start_date` |
+![alt text](../Screenshots/getdistrictadmindrag.png)
 
-> 💡 `flow['get_district_info'].output['schools'][0]['schoolDBN']` picks the first school's building code (`schoolDBN`) returned by the real Location API. The agent will use this to book rooms in that school building.
+10. Hover over the arrow connecting the "Get schools and offices" (added in the previous step) to the End node and click **+**. Select **Call a tool**.
 
-![alt text](./lab-assets/part1/book_rooms_mapping.png)
+![alt text](../Screenshots/hoveroverget.png)
 
----
+11. In the **Tools** search bar, search for `bookBuilding`. Same as before, drag and drop it below the "Get schools and offices" tool before the output/end node.
 
-### Step 4: Add the draft_output prompt node
+![alt text](../Screenshots/bookbuildingdrag.png)
 
-Hover over the arrow connecting `book_rooms` to the End node and click **+**. Select **Generative prompt**:
+12. Hover over the arrow connecting "Book rooms in a building" to the End node and click **+**. Select **Add a flow activity** and then click **Generative prompt**:
 
-![alt text](./lab-assets/part1/add_generative_prompt.png)
+![alt text](../Screenshots/addflowgenprompt.png)
 
-Click on the new node and rename it to:
-```
-draft_output
-```
+13. In the **System prompt** enter in the following:
 
-Click on **Edit prompt settings**:
-
-![alt text](./lab-assets/part1/edit_prompt_settings.png)
-
-Enter the following **System prompt**:
 ```
 You are the NYSDOE Operations Agent. You produce professional, clear district 
 communications and operational plans. Always fill every field with real values 
 — never use placeholders.
 ```
 
-Enter the following **User prompt**:
+![alt text](../Screenshots/operationsystemprompt.png)
+
+14. In the **User prompt** enter in the following:
+
 ```
 A facility disruption has occurred. Using the details below, produce the full relocation output.
 
@@ -346,6 +331,8 @@ Subject: STAFF NOTICE: Facility Relocation — {affected_building_name}
 A full professional staff notification email. Include the disruption detail, 
 new site name and address, booking confirmation ID, facilities notes, and contact info.
 ```
+![alt text](../Screenshots/operationuserprompt.png)
+
 
 Now we need to add the **input variables** that the prompt references in the curly braces `{}`. Click on **Add variable** and create the following String variables. You can add test values to each so you can run the prompt and validate it directly in the editor:
 
@@ -399,7 +386,19 @@ Click **Done** to close the flow editor. Your completed flow should look like th
 
 ![alt text](./lab-assets/part1/completed_flow.png)
 
-✅ The `relocation_flow` is now built. We will attach it to the Operations Agent in Part 2.
+**Test the Operations Agent** by clicking **Preview** and sending:
+```
+A water main broke at PS 142 in District 4. We need to relocate immediately.
+The disruption started today and we need 8 rooms starting 2025-07-15.
+```
+
+✅ The agent should call `relocation_flow` and return a booking confirmation, relocation plan, and two draft emails.
+
+![alt text](./lab-assets/part1/operations_agent_test.png)
+
+Click **Save**.
+
+✅ The `relocation_flow` is built and the `operations_agent` is ready.
 
 ---
 
@@ -415,7 +414,36 @@ Click **Done** to close the flow editor. Your completed flow should look like th
 
 ### Step 1: Create the threat_response_flow and configure inputs and outputs
 
-In the **Agent Builder**, create another temporary test agent — name it **Emergency Flow Test** — then scroll down to **Toolset**, click **Add Tool**, and select **Create an agentic workflow**.
+In the **Agent Builder**, click **Create Agent** → **Create from scratch**. We are going to create the **Emergency Response Agent** now and build the flow directly inside it.
+
+Name the agent:
+```
+emergency_response_agent
+```
+
+Description:
+```
+District-Wide Threat Response Agent. Triggered by a severe weather warning for a specific geographic district. Differentiates response by building type: for schools it bulk-alerts every principal by SMS; for office buildings it switches HVAC to low-power mode and remotely locks all doors. Returns a full timestamped incident report.
+```
+
+Select **meta-llama/llama-3-3-70b-instruct** from the **Model** drop-down.
+
+Enter the following **Behavior** (Instructions):
+```
+You are the NYSDOE Emergency Response Agent for district-wide threat response.
+
+When a weather warning is reported, collect the district_id, threat_type, and
+severity from the user, then call threat_response_flow immediately.
+That flow handles all response steps — fetching district buildings, alerting
+school principals, securing office HVAC, locking office doors, and drafting
+the incident report.
+
+Present the returned incident report clearly to the user. If any principals
+were skipped or any office actions need verification, highlight them so the
+operator can follow up.
+```
+
+Click **Create**. Now scroll down to **Toolset**, click **Add Tool**, and select **Create an agentic workflow**.
 
 Click the **pencil icon** on the flow name and update it to:
 ```
@@ -632,108 +660,6 @@ Click **Done** to close the flow editor. Your completed flow should look like th
 
 ![alt text](./lab-assets/part1b/completed_flow.png)
 
-✅ The `threat_response_flow` is now built.
-
----
-
-## Part 2 — Building Agents and Wiring Everything Together
-
-Now that both flows are built, we will create the real specialist agents, connect an external research agent, and build the Orchestrator that routes everything together.
-
----
-
-### Create the Operations Agent
-
-Open the **Agent Builder** and click **Create Agent**. Select **Create from scratch**.
-
-Name the agent:
-```
-operations_agent
-```
-
-Give it the following description:
-```
-Handles NYSDOE district-level facility disruptions. Given a disruption trigger (water main break, power outage, building closure), this agent finds available relocation buildings, books rooms, and drafts parent and staff notification emails.
-```
-
-![alt text](./lab-assets/part2/create_operations_agent.png)
-
-Select **meta-llama/llama-3-3-70b-instruct** from the **Model** drop-down.
-
-Scroll down to the **Behavior** (Instructions) section and enter:
-```
-You are the NYSDOE Operations Agent. When a facility disruption is reported,
-invoke the relocation_flow tool immediately — do not ask questions first.
-
-Extract these inputs from the message:
-- district_id, affected_building_name, disruption_type, rooms_needed (default 8), start_date
-
-If district_id cannot be determined, ask for it once before invoking the flow.
-
-Present the full flow output to the user (booking confirmation, relocation plan,
-parent email, staff email), then ask:
-"Would you like to send these notifications? Reply YES to confirm or NO to discard."
-
-If no suitable building is found, report it clearly and suggest escalating to the Orchestrator.
-```
-
-![alt text](./lab-assets/part2/operations_agent_instructions.png)
-
-Scroll down to the **Toolset** section and click **Add Tool**. This time, instead of creating a new workflow, select **Add existing** and search for `relocation_flow`. Select it and add it:
-
-![alt text](./lab-assets/part2/add_relocation_flow.png)
-
-**Test the Operations Agent** by clicking **Preview** and sending:
-```
-A water main broke at PS 142 in District 4. We need to relocate immediately.
-The disruption started today and we need 8 rooms starting 2025-07-15.
-```
-
-✅ The agent should call `relocation_flow` and return a booking confirmation, relocation plan, and two draft emails.
-
-![alt text](./lab-assets/part2/operations_agent_test.png)
-
-Click **Save**.
-
----
-
-### Create the Emergency Response Agent
-
-Click **Create Agent** → **Create from scratch**.
-
-Name the agent:
-```
-emergency_response_agent
-```
-
-Description:
-```
-District-Wide Threat Response Agent. Triggered by a severe weather warning for a specific geographic district. Differentiates response by building type: for schools it bulk-alerts every principal by SMS; for office buildings it switches HVAC to low-power mode and remotely locks all doors. Returns a full timestamped incident report.
-```
-
-Select **meta-llama/llama-3-3-70b-instruct** from the **Model** drop-down.
-
-Enter the following **Behavior** (Instructions):
-```
-You are the NYSDOE Emergency Response Agent for district-wide threat response.
-
-When a weather warning is reported, collect the district_id, threat_type, and
-severity from the user, then call threat_response_flow immediately.
-That flow handles all response steps — fetching district buildings, alerting
-school principals, securing office HVAC, locking office doors, and drafting
-the incident report.
-
-Present the returned incident report clearly to the user. If any principals
-were skipped or any office actions need verification, highlight them so the
-operator can follow up.
-```
-
-![alt text](./lab-assets/part2/emergency_agent_instructions.png)
-
-Under **Toolset**, click **Add Tool** → **Add existing** → search for `threat_response_flow` and add it:
-
-![alt text](./lab-assets/part2/add_threat_flow.png)
-
 **Test the Emergency Response Agent** by clicking **Preview** and sending:
 ```
 A tornado watch has been issued for District 7. Severity is HIGH.
@@ -742,9 +668,17 @@ Take all necessary emergency actions across all buildings in the district.
 
 ✅ The agent should return an incident report with an INCIDENT SUMMARY, ACTION LOG showing the new HVAC and door status values, and a FOLLOW-UP section.
 
-![alt text](./lab-assets/part2/emergency_agent_test.png)
+![alt text](./lab-assets/part1b/emergency_agent_test.png)
 
 Click **Save**.
+
+✅ The `threat_response_flow` is built and the `emergency_response_agent` is ready.
+
+---
+
+## Part 2 — Building Agents and Wiring Everything Together
+
+Both specialist agents are already built from Parts 1 and 1B. In this part you will connect an external research agent and wire everything together under the Orchestrator.
 
 ---
 
