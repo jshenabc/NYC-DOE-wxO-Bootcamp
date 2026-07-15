@@ -291,118 +291,78 @@ communications and operational plans. Always fill every field with real values
 A facility disruption has occurred. Using the details below, produce the full relocation output.
 
 DISRUPTION DETAILS:
-- Affected building: {affected_building_name}
-- District: {district_id}
-- Disruption type: {disruption_type}
-- Effective date: {start_date}
+- Affected building: {flow.input.affected_building_code}
+- District: {flow.input.district_id}
+- Disruption type: {flow.input.disruption_type}
+- Effective date: {flow.input.start_date}
 
 BOOKING CONFIRMATION (from API):
-- Booking ID: {booking_id}
-- Relocation building: {relocation_building_name}
-- Relocation building address: {relocation_building_address}
-- Rooms booked: {rooms_booked}
+- Booking ID: {flow["Book rooms in a building for relocation"].output.booking_id}
+- Relocation building: {flow["Book rooms in a building for relocation"].output.buildingName}
+- Relocation building code: {flow["Book rooms in a building for relocation"].output.buildingCode}
+- Rooms booked: {flow["Book rooms in a building for relocation"].output.rooms_booked}
 
 Produce the following four sections, clearly separated.
-IMPORTANT: The affected building ({affected_building_name}) is being EVACUATED.
-The relocation building ({relocation_building_name} at {relocation_building_address})
+IMPORTANT: The affected building ({flow.input.affected_building_code}) is being EVACUATED.
+The relocation building ({flow["Book rooms in a building for relocation"].output.buildingName})
 is the NEW TEMPORARY SITE. Never confuse the two.
 
 ## ✅ BOOKING CONFIRMED
-A short confirmation (3–4 lines): state the affected building being evacuated, 
+A short confirmation (3–4 lines): state the affected building being evacuated,
 the new temporary site name and address, booking ID, rooms booked, and effective date.
 
 ## 📋 RELOCATION PLAN
 A structured operational plan for the operations team. Include:
-1. Immediate actions (Day 0 — {start_date})
+1. Immediate actions (Day 0 — {flow.input.start_date})
 2. Logistics (Day 1): room setup, IT transfer, student records, meal service
 3. Communications: confirm emails sent, update district website
 4. Responsible parties: assign each step to a role
-5. Return plan trigger: define the condition to return to {affected_building_name}
+5. Return plan trigger: define the condition to return to {flow.input.affected_building_code}
 
 ## 📧 PARENT EMAIL
-Subject: Important: School Relocation Notice — {affected_building_name}
+Subject: Important: School Relocation Notice — {flow.input.affected_building_code}
 
-A full professional parent notification email. Include what happened, the new 
+A full professional parent notification email. Include what happened, the new
 temporary site name and full address, effective date, next steps, and contact info.
 
 ## 📧 STAFF EMAIL
-Subject: STAFF NOTICE: Facility Relocation — {affected_building_name}
+Subject: STAFF NOTICE: Facility Relocation — {flow.input.affected_building_code}
 
-A full professional staff notification email. Include the disruption detail, 
+A full professional staff notification email. Include the disruption detail,
 new site name and address, booking confirmation ID, facilities notes, and contact info.
 ```
+
 ![alt text](../Screenshots/operationuserprompt.png)
 
+Once you are satisfied with the prompts, you can close the prompt settings.
 
-Now we need to add the **input variables** that the prompt references in the curly braces `{}`. Click on **Add variable** and create the following String variables. You can add test values to each so you can run the prompt and validate it directly in the editor:
+15. Finally, click **Done** at the top left hand corner to close the flow editor. Your completed flow should look like this:
 
-| Variable name | Sample test value |
-|---|---|
-| `affected_building_name` | `PS 142 - District 4` |
-| `district_id` | `4` |
-| `disruption_type` | `water main break` |
-| `start_date` | `2025-07-15` |
-| `booking_id` | `BK-20250715-001` |
-| `relocation_building_name` | `District 4 Community Center` |
-| `relocation_building_address` | `500 Main Street, Brooklyn, NY` |
-| `rooms_booked` | `8` |
-
-After adding all variables, click **Generate response** to run the prompt on the test values and verify the output looks correct:
-
-![alt text](./lab-assets/part1/prompt_test_output.png)
-
-Once you are satisfied, close the prompt settings.
+![alt text](../Screenshots/operationsflow.png)
 
 ---
 
-### Step 5: Map the prompt inputs
+### Step 3: Test the Operations Agent
 
-Click on the `draft_output` node and select **Edit data mapping**. We need to wire the outputs from earlier nodes in the flow to the prompt input variables we just created:
+1. In the right hand agent chat preview page, send the following message to the chat box and hit **Send**:
 
-Click the **variable icon** in each row and select the corresponding source:
-
-| Prompt variable | Map from |
-|---|---|
-| `affected_building_name` | Flow inputs → `affected_building_name` |
-| `district_id` | Flow inputs → `district_id` |
-| `disruption_type` | Flow inputs → `disruption_type` |
-| `start_date` | Flow inputs → `start_date` |
-| `booking_id` | `book_rooms` → `booking_id` |
-| `relocation_building_name` | `book_rooms` → `building_name` |
-| `relocation_building_address` | `find_buildings` → `output[0].address` |
-| `rooms_booked` | `book_rooms` → `rooms_booked` |
-
-![alt text](./lab-assets/part1/prompt_data_mapping.png)
-
----
-
-### Step 6: Connect the output and save
-
-Finally, click on the **End** node and connect the `relocation_summary` output to the output of the generative prompt node. Select **draft_output → value** as the source:
-
-![alt text](./lab-assets/part1/map_output_var.png)
-
-Click **Done** to close the flow editor. Your completed flow should look like this:
-
-![alt text](./lab-assets/part1/completed_flow.png)
-
-**Test the Operations Agent** by clicking **Preview** and sending:
 ```
-A water main broke at PS 142 in District 4. We need to relocate immediately.
+A water main broke at M007 in District 4. We need to relocate immediately.
 The disruption started today and we need 8 rooms starting 2025-07-15.
 ```
 
-✅ The agent should call `relocation_flow` and return a booking confirmation, relocation plan, and two draft emails.
+![alt text](../Screenshots/operationsmessage.png)
 
-![alt text](./lab-assets/part1/operations_agent_test.png)
+✅ The agent should call the `relocation_flow` and return a booking confirmation, relocation plan, and two draft emails. You can click on the **Show Reasoning** tab to open up the step by step reasoning process.
 
-Click **Save**.
+![alt text](../Screenshots/operationsoutput1.png)
+![alt text](../Screenshots/operationsoutput2.png)
 
 ✅ The `relocation_flow` is built and the `operations_agent` is ready.
 
 ---
 
-## Part 1B — Building the Emergency Response Workflow (Use Case 2)
+## Part 2 — Building the Emergency Use Case - "District-Wide Threat Response"
 
 > **Scenario:** A tornado watch has been issued for District 7. The Emergency Response workflow will automatically fetch all buildings in the district, bulk-alert school principals by SMS, switch office HVAC to low power, lock office doors, and produce a full incident report.
 
