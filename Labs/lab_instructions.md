@@ -548,6 +548,85 @@ Once you are satisfied with the prompts, close the prompt settings.
 
 ---
 
+
+## Part 3 — Building the Orchestrator Agent
+
+Both specialist agents are already built from Parts 1 and 2. In this part you will create the **Orchestrator Agent** and wire the two specialist agents to it as collaborators.
+
+---
+
+### Step 1: Create the Orchestrator Agent
+
+1. In the **Agent Builder**, click **Create Agent** → **Create from scratch**.
+
+Name the agent:
+```
+orchestrator_agent
+```
+
+Give it the following description:
+```
+Central NYSDOE Orchestrator Agent. Triages every incoming district trigger and routes it to the correct specialist: facility disruptions go to the Operations Agent, weather or security threats go to the Emergency Response Agent.
+```
+
+Then, click **Create**.
+
+![alt text](../Screenshots/orchestratoragentname.png)
+
+2. Scroll down to the **Behavior** (Instructions) section and enter:
+
+```
+You are the NYSDOE Orchestrator Agent. Your sole job is to triage incoming
+triggers and delegate to the appropriate specialist agent. Never attempt to
+handle facility operations or emergency protocols yourself.
+
+ROUTING RULES:
+
+1. FACILITY DISRUPTION (water main break, power outage, building closure,
+   structural damage, HVAC failure, relocation needed)
+   → Route to: operations_agent
+   Pass: district_id, affected_building_code, disruption_type, rooms_needed, start_date.
+
+2. WEATHER OR SECURITY THREAT (tornado watch, ice storm, hurricane, severe
+   weather warning, lockdown)
+   → Route to: emergency_response_agent
+   Pass: district_id, threat_type, and severity.
+
+BEHAVIOUR:
+- Extract all context from the message before routing.
+- If district_id is missing, ask for it once — then route immediately.
+- Do not ask unnecessary clarifying questions.
+- Present the specialist agent's full output without summarising or truncating.
+- If a specialist agent fails, report the failure clearly.
+```
+
+![alt text](../Screenshots/orchestratoragentbehavior.png)
+
+---
+
+### Step 2: Add the Specialist Agents as Collaborators
+
+1. Scroll down to the **Agents** section (separate from Toolset). Click **Add Agent**:
+
+![alt text](../Screenshots/addagent.png)
+
+2. Search for and add the **Operations Agent**:
+
+![alt text](../Screenshots/addoperationsagent.png)
+
+3. Repeat and add the **Emergency Response Agent**:
+
+![alt text](../Screenshots/addemergencyagent.png)
+
+✅ Both specialist agents should now appear as collaborators under the Agents section:
+
+![alt text](../Screenshots/bothagentsadded.png)
+
+4. Click **Save**.
+
+---
+
+
 ### Step 3: Test the Emergency Response Agent
 
 1. In the right hand agent chat preview page, send the following message to the chat box and hit **Send**:
@@ -570,356 +649,221 @@ Click **Save**.
 
 ---
 
-## Part 3 — Building Agents and Wiring Everything Together
+### Step 3: Test the Orchestrator Agent
 
-Both specialist agents are already built from Parts 1 and 2. In this part you will connect an external research agent and wire everything together under the Orchestrator.
-
----
-
-### Build and Connect the School Research Assistant (watsonx.ai)
-
-In this section you will build the **School Research Assistant** directly inside **watsonx.ai** as a LangGraph agent, then connect it to Watson Orchestrate as an external agent so the Orchestrator can call it.
-
----
-
-#### Step 1: Open watsonx.ai and create a new AI Agent
-
-Open a new browser tab and navigate to your watsonx.ai instance. In the left navigation click **Projects**, then open the lab project provided by your instructor.
-
-Inside the project click **New asset** → **AI Agent**:
-
-![alt text](./lab-assets/part2/wxai_new_asset.png)
-
----
-
-#### Step 2: Configure the agent name and model
-
-Give the agent the name:
-```
-school_research_assistant
-```
-
-Select a model — **ibm/granite-3-3-8b-instruct** or **meta-llama/llama-3-3-70b-instruct** both work well for this use case.
-
-![alt text](./lab-assets/part2/wxai_agent_name_model.png)
-
----
-
-#### Step 3: Add the system prompt
-
-In the **System instructions** field enter:
+1. In the right hand agent chat preview page, send the following message to test **Use Case 1 — Facility Relocation**:
 
 ```
-You are a NYSDOE School Research Assistant. When given a research query:
-1. Use the Google Search tool to find relevant, current information.
-2. Filter results for New York State education context where possible.
-3. Return a concise, structured summary (3–5 bullet points) with source URLs.
-Focus areas: emergency protocols, shelter locations, district policies, school closures.
+A water main broke at M007 in District 4. We need to relocate immediately.
+The disruption started today and we need 8 rooms starting 2025-07-15.
 ```
 
-![alt text](./lab-assets/part2/wxai_system_prompt.png)
-
----
-
-#### Step 4: Add the Google Search tool
-
-In the **Tools** panel, click **Add tool** and select **Google Search** from the list of available tools:
-
-![alt text](./lab-assets/part2/wxai_add_google_search.png)
-
-> 💡 If Google Search does not appear in the tools list, ask your instructor — it may need to be enabled at the project level first.
-
----
-
-#### Step 5: Test the agent in watsonx.ai
-
-Click **Preview** and send the following test query:
-
-```
-What are the current NYSDOE emergency weather protocols for school districts?
-```
-
-✅ You should see the agent call the Google Search tool and return a structured summary with bullet points and source URLs.
-
-![alt text](./lab-assets/part2/wxai_agent_test.png)
-
----
-
-#### Step 6: Deploy the agent
-
-Click **Save**, then click **Deploy** to publish the agent as a hosted endpoint.
-
-Select a deployment space (your instructor will tell you which space to use), give the deployment a name, and click **Deploy**:
-
-![alt text](./lab-assets/part2/wxai_deploy.png)
-
-Once deployment is complete, open the deployment details and copy the **Endpoint URL** — you will need it in the next step.
-
-You will also need an **API key**. In the top-right of the IBM Cloud / watsonx.ai interface, go to **Manage → API Keys** and create a new key. Copy and save it.
-
-![alt text](./lab-assets/part2/wxai_endpoint_url.png)
-
----
-
-#### Step 7: Connect the deployed agent to Watson Orchestrate
-
-Switch back to the Watson Orchestrate browser tab. In the **Agent Builder**, click **Add External Agent**:
-
-![alt text](./lab-assets/part2/add_external_agent.png)
-
-Fill in the details using the endpoint and key from the previous step:
-- **Name:** `school_research_assistant`
-- **Title:** `School Research Assistant`
-- **Endpoint URL:** *(the URL you copied from the watsonx.ai deployment)*
-- **Authentication:** API Key
-- **API Key:** *(the API key you created)*
-
-![alt text](./lab-assets/part2/external_agent_config.png)
-
-Click **Test Connection**. You should see a green success indicator:
-
-![alt text](./lab-assets/part2/connection_test_success.png)
-
-**Test the connection** by opening the agent preview in Orchestrate and sending:
-```
-What are the current NYSDOE emergency weather protocols for school districts?
-```
-
-✅ You should receive the same structured summary you saw in watsonx.ai, now routed through the Orchestrate connection.
-
-Click **Save**.
-
-
----
-
-## Part 2 — Building Agents and Wiring Everything Together
-
-Both specialist agents are already built from Parts 1 and 1B. In this part you will connect an external research agent and wire everything together under the Orchestrator.
-
----
-
-### Build and Connect the School Research Assistant (watsonx.ai)
-
-In this section you will build the **School Research Assistant** directly inside **watsonx.ai** as a LangGraph agent, then connect it to Watson Orchestrate as an external agent so the Orchestrator can call it.
-
----
-
-#### Step 1: Open watsonx.ai and create a new AI Agent
-
-Open a new browser tab and navigate to your watsonx.ai instance. In the left navigation click **Projects**, then open the lab project provided by your instructor.
-
-Inside the project click **New asset** → **AI Agent**:
-
-![alt text](./lab-assets/part2/wxai_new_asset.png)
-
----
-
-#### Step 2: Configure the agent name and model
-
-Give the agent the name:
-```
-school_research_assistant
-```
-
-Select a model — **ibm/granite-3-3-8b-instruct** or **meta-llama/llama-3-3-70b-instruct** both work well for this use case.
-
-![alt text](./lab-assets/part2/wxai_agent_name_model.png)
-
----
-
-#### Step 3: Add the system prompt
-
-In the **System instructions** field enter:
-
-```
-You are a NYSDOE School Research Assistant. When given a research query:
-1. Use the Google Search tool to find relevant, current information.
-2. Filter results for New York State education context where possible.
-3. Return a concise, structured summary (3–5 bullet points) with source URLs.
-Focus areas: emergency protocols, shelter locations, district policies, school closures.
-```
-
-![alt text](./lab-assets/part2/wxai_system_prompt.png)
-
----
-
-#### Step 4: Add the Google Search tool
-
-In the **Tools** panel, click **Add tool** and select **Google Search** from the list of available tools:
-
-![alt text](./lab-assets/part2/wxai_add_google_search.png)
-
-> 💡 If Google Search does not appear in the tools list, ask your instructor — it may need to be enabled at the project level first.
-
----
-
-#### Step 5: Test the agent in watsonx.ai
-
-Click **Preview** and send the following test query:
-
-```
-What are the current NYSDOE emergency weather protocols for school districts?
-```
-
-✅ You should see the agent call the Google Search tool and return a structured summary with bullet points and source URLs.
-
-![alt text](./lab-assets/part2/wxai_agent_test.png)
-
----
-
-#### Step 6: Deploy the agent
-
-Click **Save**, then click **Deploy** to publish the agent as a hosted endpoint.
-
-Select a deployment space (your instructor will tell you which space to use), give the deployment a name, and click **Deploy**:
-
-![alt text](./lab-assets/part2/wxai_deploy.png)
-
-Once deployment is complete, open the deployment details and copy the **Endpoint URL** — you will need it in the next step.
-
-You will also need an **API key**. In the top-right of the IBM Cloud / watsonx.ai interface, go to **Manage → API Keys** and create a new key. Copy and save it.
-
-![alt text](./lab-assets/part2/wxai_endpoint_url.png)
-
----
-
-#### Step 7: Connect the deployed agent to Watson Orchestrate
-
-Switch back to the Watson Orchestrate browser tab. In the **Agent Builder**, click **Add External Agent**:
-
-![alt text](./lab-assets/part2/add_external_agent.png)
-
-Fill in the details using the endpoint and key from the previous step:
-- **Name:** `school_research_assistant`
-- **Title:** `School Research Assistant`
-- **Endpoint URL:** *(the URL you copied from the watsonx.ai deployment)*
-- **Authentication:** API Key
-- **API Key:** *(the API key you created)*
-
-![alt text](./lab-assets/part2/external_agent_config.png)
-
-Click **Test Connection**. You should see a green success indicator:
-
-![alt text](./lab-assets/part2/connection_test_success.png)
-
-**Test the connection** by opening the agent preview in Orchestrate and sending:
-```
-What are the current NYSDOE emergency weather protocols for school districts?
-```
-
-✅ You should receive the same structured summary you saw in watsonx.ai, now routed through the Orchestrate connection.
-
-Click **Save**.
-
----
-
-### Create the Orchestrator Agent
-
-Click **Create Agent** → **Create from scratch**.
-
-Name the agent:
-```
-orchestrator_agent
-```
-
-Description:
-```
-Central NYSDOE Orchestrator Agent. Triages every incoming district trigger and routes it to the correct specialist: facility disruptions go to the Operations Agent, weather or security threats go to the Emergency Response Agent, and research or policy questions go to the School Research Assistant.
-```
-
-Select **meta-llama/llama-3-3-70b-instruct** from the **Model** drop-down.
-
-Enter the following **Behavior** (Instructions):
-```
-You are the NYSDOE Orchestrator Agent. Your sole job is to triage incoming
-triggers and delegate to the appropriate specialist agent. Never attempt to
-handle facility operations or emergency protocols yourself.
-
-ROUTING RULES:
-
-1. FACILITY DISRUPTION (water main break, power outage, building closure,
-   structural damage, HVAC failure, relocation needed)
-   → Route to: operations_agent
-   Pass: district_id, affected building name, disruption type, rooms needed, start date.
-
-2. WEATHER OR SECURITY THREAT (tornado watch, ice storm, hurricane, severe
-   weather warning, lockdown)
-   → Route to: emergency_response_agent
-   Pass: district_id, threat_type, and severity.
-
-3. RESEARCH OR POLICY LOOKUP (questions about district protocols, shelter
-   availability, NYSDOE policies, contextual background)
-   → Route to: school_research_assistant
-   Pass: a precise research query derived from the user's request.
-
-4. COMBINED SCENARIO (research needed before taking action)
-   → First route to: school_research_assistant
-   → Then route to: operations_agent or emergency_response_agent
-   → Consolidate both outputs before responding.
-
-BEHAVIOUR:
-- Extract all context from the message before routing.
-- If district_id is missing, ask for it once — then route immediately.
-- Do not ask unnecessary clarifying questions.
-- Present the specialist agent's full output without summarising or truncating.
-- If a specialist agent fails, report the failure clearly.
-```
-
-![alt text](./lab-assets/part2/orchestrator_instructions.png)
-
-Scroll down to the **Agents** section (separate from Toolset). Click **Add Agent** and add all three specialist agents:
-- `operations_agent`
-- `emergency_response_agent`
-- `school_research_assistant`
-
-![alt text](./lab-assets/part2/add_collaborators.png)
-
-Click **Save**.
-
----
-
-## End-to-End Testing
-
-Now test all three scenarios through the **Orchestrator Agent** preview.
-
-### Test 1 — Use Case 1: Facility Relocation
-
-Send the following to the Orchestrator:
-```
-A water main has burst at PS 142 in District 4. The building must be evacuated 
-and students relocated. We need 8 rooms starting 2025-07-15. Handle this.
-```
+![alt text](../Screenshots/orchestratormessage1.png)
 
 ✅ **Expected flow:** Orchestrator → Operations Agent → `relocation_flow` → booking confirmation + relocation plan + parent email + staff email
 
-![alt text](./lab-assets/part3/test1_output.png)
+![alt text](../Screenshots/orchestratoroutput1.png)
 
----
-
-### Test 2 — Use Case 2: Emergency Threat Response
+2. Now send the following message to test **Use Case 2 — Emergency Threat Response**:
 
 ```
 A tornado watch has been issued for District 7. Severity is HIGH.
 Take all necessary emergency actions across all buildings in the district.
 ```
 
-✅ **Expected flow:** Orchestrator → Emergency Response Agent → `threat_response_flow` → incident report showing new HVAC and door status values
+![alt text](../Screenshots/orchestratormessage2.png)
 
-![alt text](./lab-assets/part3/test2_output.png)
+✅ **Expected flow:** Orchestrator → Emergency Response Agent → `threat_response_flow` → incident report showing HVAC and door status values
+
+![alt text](../Screenshots/orchestratoroutput2.png)
+
+Click **Save**.
+
+✅ The `orchestrator_agent` is built and routing correctly to both specialist agents.
 
 ---
 
-### Test 3 — Combined: Research + Emergency Response
+## Part 4 — Add an External LangGraph Agent from watsonx.ai *(Optional)*
+
+In this optional section you will build a **School Research Assistant** as a LangGraph agent directly inside **watsonx.ai**, deploy it as a hosted endpoint, and connect it to Watson Orchestrate so the Orchestrator can call it for research and policy lookups.
+
+---
+
+### Step 1: Create the LangGraph Agent in watsonx.ai
+
+1. Open a new browser tab and navigate to your watsonx.ai instance. In the left navigation click **Projects**, then open the lab project provided by your instructor.
+
+2. Inside the project click **New asset** → **AI Agent**:
+
+![alt text](../Screenshots/wxainewasset.png)
+
+3. Give the agent the name:
+```
+school_research_assistant
+```
+
+Select a model — **ibm/granite-3-3-8b-instruct** or **meta-llama/llama-3-3-70b-instruct** both work well for this use case.
+
+![alt text](../Screenshots/wxaiagentname.png)
+
+4. In the **System instructions** field enter:
 
 ```
-A severe ice storm warning has been issued for District 12. Before executing 
-emergency protocols, look up the current NYSDOE winter storm school closure 
+You are a NYSDOE School Research Assistant. When given a research query:
+1. Use the Google Search tool to find relevant, current information.
+2. Filter results for New York State education context where possible.
+3. Return a concise, structured summary (3–5 bullet points) with source URLs.
+Focus areas: emergency protocols, shelter locations, district policies, school closures.
+```
+
+![alt text](../Screenshots/wxaisystemprompt.png)
+
+5. In the **Tools** panel, click **Add tool** and select **Google Search** from the list of available tools:
+
+![alt text](../Screenshots/wxaiaddgooglesearch.png)
+
+> 💡 If Google Search does not appear in the tools list, ask your instructor — it may need to be enabled at the project level first.
+
+6. Click **Preview** and send the following test query to validate the agent:
+
+```
+What are the current NYSDOE emergency weather protocols for school districts?
+```
+
+✅ You should see the agent call the Google Search tool and return a structured summary with bullet points and source URLs.
+
+![alt text](../Screenshots/wxaiagenttest.png)
+
+---
+
+### Step 2: Deploy the Agent in watsonx.ai
+
+1. Click **Save**, then click **Deploy** to publish the agent as a hosted endpoint.
+
+2. Select a deployment space (your instructor will tell you which space to use), give the deployment a name, and click **Deploy**:
+
+![alt text](../Screenshots/wxaideploy.png)
+
+3. Once deployment is complete, open the deployment details and copy the **Endpoint URL** — you will need it in the next step.
+
+4. You will also need an **API key**. In the top-right of the IBM Cloud / watsonx.ai interface, go to **Manage → API Keys** and create a new key. Copy and save it.
+
+![alt text](../Screenshots/wxaiendpointurl.png)
+
+---
+
+### Step 3: Import the watsonx.ai Agent into Watson Orchestrate
+
+1. Switch back to the Watson Orchestrate browser tab. In the **Agent Builder**, click **Add External Agent**:
+
+![alt text](../Screenshots/addexternalagent.png)
+
+2. Fill in the details using the endpoint and key from the previous step:
+
+   | Field | Value |
+   |---|---|
+   | **Name** | `school_research_assistant` |
+   | **Title** | `School Research Assistant` |
+   | **Endpoint URL** | *(the URL you copied from the watsonx.ai deployment)* |
+   | **Authentication** | API Key |
+   | **API Key** | *(the API key you created)* |
+
+![alt text](../Screenshots/externalagentconfig.png)
+
+3. Click **Test Connection**. You should see a green success indicator:
+
+![alt text](../Screenshots/connectiontestsuccess.png)
+
+4. Click **Save**.
+
+---
+
+### Step 4: Add the Research Assistant to the Orchestrator
+
+1. Open the **orchestrator_agent** in the Agent Builder.
+
+2. Update the **Behavior** (Instructions) to add a third routing rule:
+
+```
+3. RESEARCH OR POLICY LOOKUP (questions about district protocols, shelter
+   availability, NYSDOE policies, contextual background)
+   → Route to: school_research_assistant
+   Pass: a precise research query derived from the user's request.
+```
+
+3. Scroll down to the **Agents** section and click **Add Agent**. Search for and add `school_research_assistant`:
+
+![alt text](../Screenshots/addresearchassistant.png)
+
+4. Click **Save**.
+
+5. Test the updated Orchestrator by sending:
+
+```
+What are the current NYSDOE emergency weather protocols for school districts?
+```
+
+✅ The Orchestrator should route this to the School Research Assistant and return a structured summary with source URLs.
+
+![alt text](../Screenshots/researchoutput.png)
+
+---
+
+## Part 5 — End-to-End Testing
+
+Now test all scenarios end-to-end through the **Orchestrator Agent** preview.
+
+---
+
+### Test 1 — Use Case 1: Facility Relocation
+
+1. Send the following to the Orchestrator:
+
+```
+A water main broke at M007 in District 4. Building code M007.
+We need to relocate immediately and need 8 rooms starting 2025-07-15.
+```
+
+![alt text](../Screenshots/test1message.png)
+
+✅ **Expected flow:** Orchestrator → Operations Agent → `relocation_flow` → booking confirmation + relocation plan + parent email + staff email
+
+![alt text](../Screenshots/test1output.png)
+
+---
+
+### Test 2 — Use Case 2: Emergency Threat Response
+
+2. Send the following to the Orchestrator:
+
+```
+A tornado watch has been issued for District 7. Severity is HIGH.
+Take all necessary emergency actions across all buildings in the district.
+```
+
+![alt text](../Screenshots/test2message.png)
+
+✅ **Expected flow:** Orchestrator → Emergency Response Agent → `threat_response_flow` → incident report showing HVAC and door status values
+
+![alt text](../Screenshots/test2output.png)
+
+---
+
+### Test 3 — Combined: Research + Emergency Response *(Optional — requires Part 4)*
+
+3. Send the following to the Orchestrator:
+
+```
+A severe ice storm warning has been issued for District 7. Before executing
+emergency protocols, look up the current NYSDOE winter storm school closure
 policy, then act accordingly.
 ```
 
+![alt text](../Screenshots/test3message.png)
+
 ✅ **Expected flow:** Orchestrator → School Research Assistant (policy lookup) → Emergency Response Agent (execute protocols) → consolidated report
 
-![alt text](./lab-assets/part3/test3_output.png)
+![alt text](../Screenshots/test3output.png)
 
 ---
 
