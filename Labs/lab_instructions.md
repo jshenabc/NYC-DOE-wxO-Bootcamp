@@ -21,10 +21,6 @@
   - [Step 2: Add the Specialist Agents as Collaborators](#step-2-add-the-specialist-agents-as-collaborators)
   - [Step 3: Test the Orchestrator Agent](#step-3-test-the-orchestrator-agent)
 - [Part 4 — Add an External LangGraph Agent from watsonx.ai *(Optional)*](#part-4--add-an-external-langgraph-agent-from-watsonxai-optional)
-- [Part 5 — End-to-End Testing](#part-5--end-to-end-testing)
-  - [Test 1 — Use Case 1: Facility Relocation](#test-1--use-case-1-facility-relocation)
-  - [Test 2 — Use Case 2: Emergency Threat Response](#test-2--use-case-2-emergency-threat-response)
-  - [Test 3 — Combined: Research + Emergency Response *(Optional — requires Part 4)*](#test-3--combined-research--emergency-response-optional--requires-part-4)
 - [Pulling it all together](#pulling-it-all-together)
 
 ---
