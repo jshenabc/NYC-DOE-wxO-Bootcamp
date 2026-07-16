@@ -713,7 +713,7 @@ Take all necessary emergency actions across all buildings in the district.
 >
 > 👉 **[Click here to go to the Part 4 Optional Lab](lab_optional.md)**
 >
-> Once you complete Part 4, return here and continue with **Part 5** below.
+> Once you complete Part 4, return here and continue below.
 
 ---
 
