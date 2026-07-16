@@ -141,7 +141,7 @@ What are the Emergency Closing Procedures & FAQ's at Afton Central School Distri
 
 ✅ You should see the agent call the Google Search tool and return a structured summary with bullet points and source URLs.
 
-
+When you are satisfied with your agent's description, instructions, and test outputs, clikc **Save** in the top right hand corner and **Save as an editable agent**
 
 ---
 
