@@ -332,7 +332,7 @@ A full professional staff notification email. Include the disruption detail,
 new site name and address, booking confirmation ID, facilities notes, and contact info.
 ```
 
-![alt text](../Screenshots/operationuserprompt.png)
+![alt text](../Screenshots/opersationuserprompt.png)
 
 Once you are satisfied with the prompts, you can close the prompt settings.
 
