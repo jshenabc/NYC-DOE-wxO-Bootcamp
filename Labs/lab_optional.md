@@ -265,6 +265,6 @@ What are the NYS Department of Education emergency weather protocols for school 
 
 ## Return to the main lab
 
-When you are finished with this optional Part 4 section, return to the main lab here:
+When you are finished with this optional Part 4 section, return to the **Pulling it all together** section in the main lab here:
 
-👉 **[Return to the main lab instructions](lab_instructions.md)**
+👉 **[Return to the Pulling it all together section](lab_instructions.md#pulling-it-all-together)**
