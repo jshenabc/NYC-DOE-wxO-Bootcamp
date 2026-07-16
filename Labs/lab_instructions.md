@@ -336,7 +336,23 @@ new site name and address, booking confirmation ID, facilities notes, and contac
 
 Once you are satisfied with the prompts, you can close the prompt settings.
 
-15. Finally, click **Done** at the top left hand corner to close the flow editor. Your completed flow should look like this:
+15. Click on the grey stop button at the bottom of the flow labeled **Outputs**. Add a **string** output and name it "relocation_output".
+
+![alt text](../Screenshots/editdatamappingoperations.png)
+
+16. Click on the **Edit data mapping** button at the bottom of the **Outputs** tab, where you should now see your relocation_output string variable.
+
+![alt text](../Screenshots/relocationoutput.png)
+
+17. Click on the **{x}** button to map relocation_output to a variable.
+
+![alt text](../Screenshots/clickvariableoperations.png)
+
+18. Click on **Generative prompt** then select **value**. You should now see the relocation_output variable being mapped to **Generative prompt.value**. You can exit out of the data mappings page once this looks correct.
+
+![alt text](../Screenshots/clickgenerativepromptvalueoperations.png)
+
+19. Finally, click **Done** at the top left hand corner to close the flow editor. Your completed flow should look like this:
 
 ![alt text](../Screenshots/operationsflow.png)
 
@@ -347,8 +363,8 @@ Once you are satisfied with the prompts, you can close the prompt settings.
 1. In the right hand agent chat preview page, send the following message to the chat box and hit **Send**:
 
 ```
-A water main broke at M007 in District 4. We need to relocate immediately.
-The disruption started today and we need 8 rooms starting 2025-07-15.
+A water main broke at building M007 in District 4. We need to relocate immediately.
+The disruption started today and we need 8 rooms starting 2025-07-21.
 ```
 
 ![alt text](../Screenshots/operationsmessage.png)
@@ -542,7 +558,23 @@ If {flow["Lock or unlock ALL buildings in a district"].output.status} is not 'up
 
 Once you are satisfied with the prompts, close the prompt settings.
 
-14. Finally, click **Done** at the top left hand corner to close the flow editor. Your completed flow should look like this:
+14. Click on the grey stop button at the bottom of the flow labeled **Outputs**. Add a **string** output and name it "emergency_output".
+
+![alt text](../Screenshots/editdatamappingemer.png)
+
+15. Click on the **Edit data mapping** button at the bottom of the **Outputs** tab, where you should now see your emergency_output string variable.
+
+![alt text](../Screenshots/relocationoutputemer.png)
+
+16. Click on the **{x}** button to map emergency_output to a variable.
+
+![alt text](../Screenshots/clickvariableemer.png)
+
+17. Click on **Generative prompt** then select **value**. You should now see the emergency_output variable being mapped to **Generative prompt.value**. You can exit out of the data mappings page once this looks correct.
+
+![alt text](../Screenshots/clickgenerativepromptvalueemer.png)
+
+18. Finally, click **Done** at the top left hand corner to close the flow editor. Your completed flow should look like this:
 
 ![alt text](../Screenshots/emergencyflow.png)
 
@@ -609,11 +641,13 @@ ROUTING RULES:
    structural damage, HVAC failure, relocation needed)
    → Route to: operations_agent
    Pass: district_id, affected_building_code, disruption_type, rooms_needed, start_date.
+   OUTPUT THE FULL MESSAGE FROM flow.output.relocation_output
 
 2. WEATHER OR SECURITY THREAT (tornado watch, ice storm, hurricane, severe
    weather warning, lockdown)
    → Route to: emergency_response_agent
    Pass: district_id, threat_type, and severity.
+   OUTPUT THE FULL MESSAGE FROM flow.output.emergency_output
 
 BEHAVIOUR:
 - Extract all context from the message before routing.
@@ -656,20 +690,18 @@ BEHAVIOUR:
 1. In the right hand agent chat preview page, send the following message to test **The Operations Use Case — Facility Relocation**:
 
 ```
-A water main broke at building code M007 in District 4. We need to relocate immediately.
-The disruption started today and we need 8 rooms starting 2025-07-15.
+A water main broke at building code M007 in District 04. We need to relocate immediately.
+The disruption started today and we need 3 rooms starting 2025-07-21.
 ```
 
 ![alt text](../Screenshots/orchestratormessage1.png)
 
 ✅ **Expected flow:** Orchestrator → Operations Agent → `relocation_flow` → booking confirmation + relocation plan + parent email + staff email
 
-![alt text](../Screenshots/orchestratoroutput1.png)
-
 2. Now send the following message to test **The Emergency Use Case — Threat Response**:
 
 ```
-A tornado watch has been issued for District 7. Severity is HIGH.
+A tornado watch has been issued for District 07. Severity is high. 
 Take all necessary emergency actions across all buildings in the district.
 ```
 
@@ -677,11 +709,8 @@ Take all necessary emergency actions across all buildings in the district.
 
 ✅ **Expected flow:** Orchestrator → Emergency Response Agent → `threat_response_flow` → incident report showing HVAC and door status values
 
-![alt text](../Screenshots/orchestratoroutput2.png)
 
-Click **Save**.
-
-✅ The `orchestrator_agent` is built and routing correctly to both specialist agents.
+3. ✅ The `orchestrator_agent` is built and routing correctly to both specialist agents.
 
 ---
 
