@@ -1,6 +1,6 @@
 # Part 4 — Add an External LangGraph Agent from watsonx.ai *(Optional)*
 
-> You arrived here from **Part 4** of [`lab_instructions.md`](lab_instructions.md). Complete this optional section, then use the link at the end of this page to continue to **Part 5**.
+> You arrived here from **Part 4** of [`lab_instructions.md`](lab_instructions.md). Complete this optional section, then use the link at the end of this page to return to the main lab.
 
 ---
 
@@ -263,8 +263,8 @@ What are the NYS Department of Education emergency weather protocols for school 
 
 ---
 
-## Continue to Part 5
+## Return to the main lab
 
-When you are finished with this optional Part 4 section, return to the main lab and continue here:
+When you are finished with this optional Part 4 section, return to the main lab here:
 
-👉 **[Continue to Part 5 in the main lab instructions](lab_instructions.md#part-5--end-to-end-testing)**
+👉 **[Return to the main lab instructions](lab_instructions.md)**

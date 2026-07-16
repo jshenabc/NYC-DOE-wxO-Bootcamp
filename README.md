@@ -18,7 +18,6 @@ The main lab includes:
 - **Part 2** — Build the Emergency use case for district-wide threat response
 - **Part 3** — Build the Orchestrator agent and connect the specialist agents
 - **Part 4 (Optional)** — Branch to the external watsonx.ai LangGraph agent lab
-- **Part 5** — Run end-to-end testing across the full solution
 
 ### Optional Part 4 lab
 
@@ -28,4 +27,14 @@ In this section, you will:
 - Build a **School Research Assistant** in watsonx.ai
 - Deploy it as an external hosted agent
 - Connect it back into Watson Orchestrate
-- Return to **Part 5** of the main lab for final testing
+- Return to the main lab when finished
+
+## What you achieved
+
+By completing this bootcamp, you will have:
+- Configured the required Watson Orchestrate connections and tools
+- Built an **Operations Agent** for school relocation scenarios
+- Built an **Emergency Response Agent** for district-wide threat response
+- Built an **Orchestrator Agent** that routes requests to the correct specialist
+- Optionally extended the solution with an external **watsonx.ai School Research Assistant**
+- Created a reusable multi-agent pattern for school district automation
