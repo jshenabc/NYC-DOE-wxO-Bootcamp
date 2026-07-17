@@ -1,0 +1,155 @@
+openapi: 3.0.3
+info:
+  title: NYSDOE Security API
+  version: 1.0.0
+  description: >
+    Remotely lock and unlock doors across NYSDOE school district buildings,
+    and send emergency SMS alerts to school principals.
+    Supports per-building and district-wide operations with full notification
+    logging on every action.
+    Building identifiers use the 4-character NYCDOE buildingCode (e.g. "K140")
+    and district identifiers use the 2-digit districtCode (e.g. "07").
+
+servers:
+  - url: https://nysdoe-security-api.2c0tjpub3zot.us-south.codeengine.appdomain.cloud
+
+paths:
+  /buildings/{buildingCode}/doors:
+    post:
+      operationId: setDoorState
+      summary: Lock or unlock ALL buildings in a district
+      description: >
+        Remotely locks or unlocks a building's doors and fires a notification.
+      tags: [Doors]
+      parameters:
+        - name: buildingCode
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 4-character NYCDOE building code (e.g. "K140")
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoorActionRequest'
+      responses:
+        "200":
+          description: Door state updated and notification fired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoorUpdateResult'
+        "404":
+          description: Building not found
+
+  /districts/{districtCode}/alert-principals:
+    post:
+      operationId: bulkAlertPrincipals
+      summary: Alert ALL school principals in a district
+      description: >
+        Sends an emergency alert to every school principal in a district.
+        Only targets buildings of type school with a principal phone on record.
+        Buildings without a phone are skipped and reported separately.
+      tags: [Alerts]
+      parameters:
+        - name: districtCode
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 2-digit NYCDOE district code (e.g. "07")
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrincipalAlertRequest'
+      responses:
+        "200":
+          description: Alerts sent to all reachable principals
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkAlertResult'
+        "404":
+          description: No schools found in district
+
+components:
+  schemas:
+    DoorState:
+      type: string
+      enum: [locked, unlocked]
+
+    AlertSeverity:
+      type: string
+      enum: [low, medium, high, critical]
+
+    DoorActionRequest:
+      type: object
+      required: [action, triggered_by]
+      properties:
+        action:       { $ref: '#/components/schemas/DoorState' }
+        triggered_by: { type: string, example: "Emergency Response Agent" }
+        reason:       { type: string, example: "Tornado watch — District 07" }
+        severity:     { $ref: '#/components/schemas/AlertSeverity' }
+
+    PrincipalAlertRequest:
+      type: object
+      required: [message, triggered_by]
+      properties:
+        message:      { type: string, example: "TORNADO WATCH: Initiate shelter-in-place immediately." }
+        triggered_by: { type: string, example: "Emergency Response Agent" }
+        severity:     { $ref: '#/components/schemas/AlertSeverity' }
+
+    DoorUpdateResult:
+      type: object
+      properties:
+        status:         { type: string }
+        buildingCode:   { type: string, example: "K140" }
+        buildingName:   { type: string }
+        type:           { type: string, enum: [school, office], description: "school = schoolDBN building; office = locationCode building" }
+        previous_state: { $ref: '#/components/schemas/DoorState' }
+        current_state:  { $ref: '#/components/schemas/DoorState' }
+        notification:   { $ref: '#/components/schemas/NotificationOut' }
+        timestamp:      { type: string, format: date-time }
+
+    BulkAlertResult:
+      type: object
+      properties:
+        status:        { type: string }
+        districtCode:  { type: string }
+        alerted_count: { type: integer }
+        skipped_count: { type: integer }
+        alerted:
+          type: array
+          items:
+            type: object
+            properties:
+              buildingCode:    { type: string }
+              buildingName:    { type: string }
+              type:            { type: string, enum: [school, office] }
+              principal_phone: { type: string }
+              notification_id: { type: string }
+        skipped:
+          type: array
+          items:
+            type: object
+            properties:
+              buildingCode: { type: string }
+              type:         { type: string, enum: [school, office] }
+              reason:       { type: string }
+        timestamp: { type: string, format: date-time }
+
+    NotificationOut:
+      type: object
+      properties:
+        notification_id: { type: string }
+        buildingCode:    { type: string }
+        buildingName:    { type: string }
+        event:           { type: string }
+        detail:          { type: string }
+        triggered_by:    { type: string }
+        severity:        { type: string }
+        timestamp:       { type: string, format: date-time }

@@ -1,0 +1,130 @@
+openapi: 3.0.3
+info:
+  title: NYSDOE Facilities API
+  version: 1.0.0
+  description: >
+    Control HVAC systems and manage room bookings across NYSDOE school district buildings.
+    Supports per-building and district-wide power mode switching with
+    automatic notification logging on every change.
+    Also handles room bookings for emergency relocations.
+    Building identifiers use the 4-character NYCDOE buildingCode (e.g. "M072")
+    and district identifiers use the 2-digit districtCode (e.g. "04").
+
+servers:
+  - url: https://nysdoe-facilities-api.2c0tjpub3zot.us-south.codeengine.appdomain.cloud
+
+paths:
+  /buildings/{buildingCode}/bookings:
+    post:
+      operationId: bookBuilding
+      summary: Book rooms in a building for relocation
+      description: >
+        Reserves rooms in the specified building for emergency relocation.
+        Called by the Operations Agent after selecting a relocation site
+        from the Location API.
+      tags: [Bookings]
+      parameters:
+        - name: buildingCode
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 4-character NYCDOE building code (e.g. "M072")
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingRequest'
+      responses:
+        "201":
+          description: Booking confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingConfirmation'
+        "404":
+          description: Building not found
+
+  /districts/{districtCode}/hvac/bulk:
+    post:
+      operationId: bulkSetHVAC
+      summary: Set HVAC mode for ALL buildings in a district
+      description: >
+        Bulk-updates every building in the district to the requested HVAC mode.
+        Fires one notification per building.
+      tags: [HVAC]
+      parameters:
+        - name: districtCode
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 2-digit NYCDOE district code (e.g. "07")
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HVACUpdateRequest'
+      responses:
+        "200":
+          description: All buildings in district updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkHVACResult'
+        "404":
+          description: No buildings found in district
+
+components:
+  schemas:
+    BookingRequest:
+      type: object
+      required: [requester, reason, rooms_needed, start_date]
+      properties:
+        requester:             { type: string, example: "Operations Agent" }
+        reason:                { type: string, example: "Water main break at P.S. 57" }
+        rooms_needed:          { type: integer, example: 8 }
+        start_date:            { type: string, format: date, example: "2025-09-01" }
+        excluded_buildingCode: { type: string, description: "Building code of the disrupted building — will be rejected if passed as the booking target", example: "M057" }
+
+    BookingConfirmation:
+      type: object
+      properties:
+        booking_id:      { type: string }
+        buildingCode:    { type: string, example: "M072" }
+        buildingName:    { type: string }
+        rooms_booked:    { type: integer }
+        confirmation_at: { type: string, format: date-time }
+
+    HVACMode:
+      type: string
+      enum: [normal, low_power, off]
+
+    HVACUpdateRequest:
+      type: object
+      required: [mode, triggered_by]
+      properties:
+        mode:         { $ref: '#/components/schemas/HVACMode' }
+        triggered_by: { type: string, example: "Emergency Response Agent" }
+        reason:       { type: string, example: "Tornado watch — District 07" }
+
+    BulkHVACResult:
+      type: object
+      properties:
+        status:          { type: string }
+        districtCode:    { type: string, example: "07" }
+        buildings_count: { type: integer }
+        mode_set:        { $ref: '#/components/schemas/HVACMode' }
+        buildings:
+          type: array
+          items:
+            type: object
+            properties:
+              buildingCode:    { type: string }
+              buildingName:    { type: string }
+              type:            { type: string, enum: [school, office] }
+              mode:            { type: string }
+              notification_id: { type: string }
+        timestamp: { type: string, format: date-time }

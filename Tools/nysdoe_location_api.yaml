@@ -1,0 +1,101 @@
+openapi: 3.0.3
+info:
+  title: NYC Location API — Admin District Details
+  version: 1.0.0
+  description: >
+    Real NYSDOE Location API. Returns administrative district details including
+    all schools (schoolDBN = building code for school buildings) and offices
+    (locationCode = building code for office buildings).
+    Authenticated via OAuth2 client_credentials (location_api connection).
+
+servers:
+  - url: https://apistg.schools.nyc/doe/stg/v1/locations
+
+security:
+  - oauth2: []
+
+paths:
+  /admin-district-details/{districtCode}:
+    get:
+      operationId: getDistrictAdminDetails
+      summary: Get schools (schoolDBN) and offices (locationCode) for a district
+      description: >
+        Returns the administrative district record. With Components=schools,offices
+        the response includes every school's schoolDBN (building code for school
+        buildings) and every office's locationCode (building code for office buildings).
+      tags: [Location]
+      parameters:
+        - name: districtCode
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 2-digit district code, e.g. "04" or "07"
+        - name: serviceAccountID
+          in: header
+          required: true
+          schema:
+            type: string
+            default: api.ibmtest
+          description: Mandatory service account header
+        - name: Components
+          in: header
+          required: false
+          schema:
+            type: string
+            default: schools,offices
+          description: >
+            Comma-separated list of additional components to include.
+            Use "schools,offices" to retrieve both schoolDBNs and locationCodes.
+      responses:
+        "200":
+          description: Administrative district details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdministrativeDistrict'
+        "404":
+          description: District not found
+
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://apistg.schools.nyc/doe/stg/v1/oauth/oauth2/token
+          scopes:
+            location: Access Location API
+
+  schemas:
+
+    SchoolSummary:
+      type: object
+      description: School record. schoolDBN is the building code for school buildings.
+      properties:
+        schoolDBN:  { type: string, example: "X001" }
+        schoolName: { type: string, example: "P.S. 001 Courtlandt School" }
+
+    LocationSummary:
+      type: object
+      description: Office record. locationCode is the building code for office buildings.
+      properties:
+        locationCode: { type: string, example: "X807" }
+        locationName: { type: string, example: "District 7 Superintendent Office" }
+
+    AdministrativeDistrict:
+      type: object
+      description: >
+        Administrative district record. schools[].schoolDBN = building codes for school
+        buildings. offices[].locationCode = building codes for office buildings.
+      properties:
+        districtCode: { type: string, example: "07" }
+        districtName: { type: string, example: "COMMUNITY SCHOOL DISTRICT 07" }
+        offices:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationSummary'
+        schools:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchoolSummary'
