@@ -702,6 +702,11 @@ Take all necessary emergency actions across all buildings in the district.
 
 ✅ **Expected flow:** Orchestrator → Emergency Response Agent → `threat_response_flow` → incident report showing HVAC and door status values
 
+We also built a **NYSDOE Building Status Dashboard** using **IBM Bob** for monitoring building door state and HVAC mode across different districts. After you run the test above from the agent, you can open the dashboard below to see the updated door and HVAC status events logged by the system:
+
+[https://nysdoe-dashboard.2c0tjpub3zot.us-south.codeengine.appdomain.cloud/](https://nysdoe-dashboard.2c0tjpub3zot.us-south.codeengine.appdomain.cloud/)
+
+![NYSDOE Building Status Dashboard showing locked door and HVAC status](../Screenshots/dashboardStatusLocked.png)
 
 3. ✅ The `orchestrator_agent` is built and routing correctly to both specialist agents.
 
