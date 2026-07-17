@@ -209,7 +209,7 @@ Now we will create the Operations Workflow within our Operations Agent.
 
 ![alt text](../Screenshots/createagenticworkflow.png)
 
-3. The flow editor will open and prompt you to name your agentic workflow. You can also click edit details to update the Name and Description fields. Then clikc **Done** to save.
+3. The flow editor will open and prompt you to name your agentic workflow. You can also click edit details to update the Name and Description fields. Then click **Done** to save.
 
 
 Change the name to:
@@ -345,7 +345,7 @@ Once you are satisfied with the prompts, you can close the prompt settings.
 
 ![alt text](../Screenshots/clickgenerativepromptvalueoperations.png)
 
-19. Finally, click **Done** at the top left hand corner to close the flow editor. Your completed flow should look like this:
+19. Finally, click **Done** at the top right hand corner to close the flow editor. Your completed flow should look like this:
 
 ![alt text](../Screenshots/operationsflow.png)
 
@@ -435,7 +435,7 @@ Now we will create the Emergency Response Workflow within our Emergency Response
 
 ![alt text](../Screenshots/createagenticworkflow.png)
 
-3. The flow editor will open and prompt you to name your agentic workflow. You can also lick **edit details** to update the Name and Description fields, then click **Done** to save.
+3. The flow editor will open and prompt you to name your agentic workflow. You can also click **edit details** to update the Name and Description fields, then click **Done** to save.
 
 ![alt text](../Screenshots/createagenticworkflow.png)
 
