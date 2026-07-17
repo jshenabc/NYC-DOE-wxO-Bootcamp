@@ -544,7 +544,7 @@ List every completed action as a bullet:
 List immediate follow-up steps for the district coordinator.
 If {flow["Alert ALL school principals in a district"].output.skipped_count} > 0, note that those principals require manual outreach.
 If {flow["Set HVAC mode for ALL buildings in a district"].output.status} is not 'bulk_updated', flag the HVAC action for manual verification.
-If {flow["Lock or unlock ALL buildings in a district"].output.status} is not 'updated', flag the door action for manual verification.
+If {flow["Lock or unlock ALL buildings in a district"].output.status} is not 'bulk_updated', flag the door action for manual verification.
 ```
 
 ![alt text](../Screenshots/emergencyuserprompt.png)
