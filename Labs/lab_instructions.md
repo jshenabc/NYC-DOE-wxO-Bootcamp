@@ -93,7 +93,7 @@ The Operations and Emergency Response flows call the **real NYC Department of Ed
 
 ### Step B: Import the necessary tools (NYC Location API tool, Security API tool, and Facilities API tool) 
 
-Your instructor will provide you with three yaml files for each of these tools. If you don't have these tools handy yet, please ask an instructor. 
+Please download the 3 yaml files in the **"Tools"** folder of this repository. If you are unable to download or access these tools, please ask an instructor for assistance. 
 
 The NYS Location API tool calls the real NYSDOE Location API and returns the list of schools (`schoolDBN`) and offices (`locationCode`) for a district. The Security and Facilities APIs are mock services that simulate door locking, HVAC control, room booking, and principal alerts. They accept the same `schoolDBN` and `locationCode` values returned by the real Location API.
 
