@@ -333,6 +333,8 @@ Once you are satisfied with the prompts, you can close the prompt settings.
 
 ![alt text](../Screenshots/editdatamappingoperations.png)
 
+![alt text](../Screenshots/addOutputValue.png)
+
 16. Click on the **Edit data mapping** button at the bottom of the **Outputs** tab, where you should now see your relocation_output string variable.
 
 ![alt text](../Screenshots/relocationoutput.png)
