@@ -534,13 +534,13 @@ Produce the following three sections, clearly separated.
 Write a short operational summary for District {flow.input.district_id} describing
 the {flow.input.threat_type} threat at severity {flow.input.severity}. Confirm that
 principal SMS alerts were sent, that HVAC was bulk-set to the {flow["Set HVAC mode for ALL buildings in a district"].output.mode_set} across all office
-buildings in the district, and that office doors were set to {flow["Lock or unlock ALL buildings in a district"].output.current_state}.
+buildings in the district, and that office doors were set to {flow["Lock or unlock ALL buildings in a district"].output.action}.
 
 ## ACTION LOG
 List every completed action as a bullet:
 • bulkAlertPrincipals — {flow["Alert ALL school principals in a district"].output.alerted_count} school principals alerted, {flow["Alert ALL school principals in a district"].output.skipped_count} skipped
 • bulkSetHVAC — {flow["Set HVAC mode for ALL buildings in a district"].output.buildings_count} office buildings set to {flow["Set HVAC mode for ALL buildings in a district"].output.mode_set} — status: {flow["Set HVAC mode for ALL buildings in a district"].output.status}
-• setDoorState — superintendent office doors set to {flow["Lock or unlock ALL buildings in a district"].output.current_state} — status: {flow["Lock or unlock ALL buildings in a district"].output.status}
+• setDoorState — superintendent office doors set to {flow["Lock or unlock ALL buildings in a district"].output.action} — status: {flow["Lock or unlock ALL buildings in a district"].output.status}
 
 ## FOLLOW-UP
 List immediate follow-up steps for the district coordinator.
