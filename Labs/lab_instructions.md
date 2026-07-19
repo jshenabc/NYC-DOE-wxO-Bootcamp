@@ -696,8 +696,8 @@ The disruption started today and we need 4 rooms starting 2026-07-21.
 2. Now send the following message to test **The Emergency Use Case — Threat Response**:
 
 ```
-A tornado watch has been issued for District 07. Severity is high. 
-Take all necessary emergency actions across all buildings in the district.
+A tornado watch has been issued for District 7. Severity is HIGH.
+Set all doors to locked and HVAC systems to low power mode.
 ```
 
 ![alt text](../Screenshots/orchestratormessage2.png)
