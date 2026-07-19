@@ -14,20 +14,21 @@ servers:
   - url: https://nysdoe-security-api.2c0tjpub3zot.us-south.codeengine.appdomain.cloud
 
 paths:
-  /buildings/{buildingCode}/doors:
+  /districts/{districtCode}/doors/bulk:
     post:
-      operationId: setDoorState
+      operationId: bulkSetDoors
       summary: Lock or unlock ALL buildings in a district
       description: >
-        Remotely locks or unlocks a building's doors and fires a notification.
+        Bulk locks or unlocks every building in the district and fires one notification per building.
+        Use this for district-wide emergency lockdowns or all-clear unlocks.
       tags: [Doors]
       parameters:
-        - name: buildingCode
+        - name: districtCode
           in: path
           required: true
           schema:
             type: string
-          description: 4-character NYCDOE building code (e.g. "K140")
+          description: 2-digit NYCDOE district code (e.g. "07")
       requestBody:
         required: true
         content:
@@ -36,13 +37,13 @@ paths:
               $ref: '#/components/schemas/DoorActionRequest'
       responses:
         "200":
-          description: Door state updated and notification fired
+          description: All buildings in district updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DoorUpdateResult'
+                $ref: '#/components/schemas/BulkDoorResult'
         "404":
-          description: Building not found
+          description: No buildings found in district
 
   /districts/{districtCode}/alert-principals:
     post:
@@ -103,17 +104,24 @@ components:
         triggered_by: { type: string, example: "Emergency Response Agent" }
         severity:     { $ref: '#/components/schemas/AlertSeverity' }
 
-    DoorUpdateResult:
+    BulkDoorResult:
       type: object
       properties:
-        status:         { type: string }
-        buildingCode:   { type: string, example: "K140" }
-        buildingName:   { type: string }
-        type:           { type: string, enum: [school, office], description: "school = schoolDBN building; office = locationCode building" }
-        previous_state: { $ref: '#/components/schemas/DoorState' }
-        current_state:  { $ref: '#/components/schemas/DoorState' }
-        notification:   { $ref: '#/components/schemas/NotificationOut' }
-        timestamp:      { type: string, format: date-time }
+        status:          { type: string }
+        districtCode:    { type: string, example: "07" }
+        action:          { $ref: '#/components/schemas/DoorState' }
+        buildings_count: { type: integer }
+        buildings:
+          type: array
+          items:
+            type: object
+            properties:
+              buildingCode:    { type: string }
+              buildingName:    { type: string }
+              type:            { type: string, enum: [school, office] }
+              door_state:      { type: string }
+              notification_id: { type: string }
+        timestamp: { type: string, format: date-time }
 
     BulkAlertResult:
       type: object

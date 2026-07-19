@@ -143,6 +143,8 @@ What are the Emergency Closing Procedures & FAQ's at Afton Central School Distri
 
 When you are satisfied with your agent's description, instructions, and test outputs, clikc **Save** in the top right hand corner and **Save as an editable agent**
 
+![Agent test2 in watsonx.ai](../Screenshots/saveagentwatsonx.png)
+
 ---
 
 ### Step 6: Deploy the agent
