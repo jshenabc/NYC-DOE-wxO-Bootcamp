@@ -66,7 +66,7 @@ The Operations and Emergency Response flows call the **real NYC Department of Ed
 ![alt text](../Screenshots/configureconnection.png)
 
 
-5. Fill in the following fields, you can leave the other fields as is. Then, scroll down to select **Team credentials** as the credential type, click **Next** to continue:
+5. Fill in the following fields, you can leave the other fields as is. Then, scroll down to select **Team credentials** as the credential type, then scroll down to the **Credential type** section:
 
    | Field | Value |
    |---|---|
