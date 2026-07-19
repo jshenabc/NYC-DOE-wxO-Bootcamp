@@ -583,7 +583,7 @@ Once you are satisfied with the prompts, close the prompt settings.
 
 ```
 A tornado watch has been issued for District 7. Severity is HIGH.
-Take all necessary emergency actions across all buildings in the district.
+Set all doors to locked and HVAC systems to low power mode.
 ```
 
 ![alt text](../Screenshots/emergencymessage.png)
