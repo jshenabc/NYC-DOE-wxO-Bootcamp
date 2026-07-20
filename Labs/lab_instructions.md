@@ -358,7 +358,7 @@ Once you are satisfied with the prompts, you can close the prompt settings.
 1. In the right hand agent chat preview page, send the following message to the chat box and hit **Send**:
 
 ```
-A water main broke at building (buildingCode: M007) in District 4. We need to relocate immediately.
+A water main broke at building (buildingCode: m083) in District 4. We need to relocate immediately.
 The disruption started today and we need 4 rooms starting 2026-07-21.
 ```
 
@@ -685,7 +685,7 @@ BEHAVIOUR:
 1. In the right hand agent chat preview page, send the following message to test **The Operations Use Case — Facility Relocation**:
 
 ```
-A water main broke at building (buildingCode: M007) in District 4. We need to relocate immediately.
+A water main broke at building (buildingCode: m083) in District 4. We need to relocate immediately.
 The disruption started today and we need 4 rooms starting 2026-07-21.
 ```
 
