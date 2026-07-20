@@ -710,6 +710,12 @@ We also built a **NYSDOE Building Status Dashboard** using **IBM Bob** for monit
 
 ![NYSDOE Building Status Dashboard showing locked door and HVAC status](../Screenshots/dashboardStatusLocked.png)
 
+You can also try the following prompt to **reset** the door and HVAC state:
+
+```
+The tornado threat for District 07 has been cleared. Issue an all‑clear notice and deactivate all emergency actions. Unlock all secured doors, restore HVAC systems to normal operating mode
+```
+
 3. ✅ The `orchestrator_agent` is built and routing correctly to both specialist agents.
 
 ---
